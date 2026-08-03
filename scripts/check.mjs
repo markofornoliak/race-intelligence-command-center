@@ -42,12 +42,13 @@ if (!css.includes('prefers-reduced-motion')) throw new Error('Reduced-motion sup
 if (!css.includes(':focus-visible')) throw new Error('Keyboard focus styling is missing.');
 
 for (const token of [
-  'RI–05 / DIGITAL TWIN',
-  '.scene-readout::before',
-  '.operations__board::before',
+  'RI–06 / DIGITAL TWIN / LIVE MODEL',
+  '.scene-view-dock',
+  '[data-ri06-explode]',
+  '.hero__scene::before',
   '@media (max-width: 900px)'
 ]) {
-  if (!css.includes(token)) throw new Error(`RI-05 visual layer missing: ${token}`);
+  if (!css.includes(token)) throw new Error(`RI-06 visual layer missing: ${token}`);
 }
 
 const threeImportPattern = /import\s*\*\s*as\s+THREE\s*from\s*['"]three['"]/;
@@ -63,12 +64,16 @@ for (const token of [
   'ResizeObserver',
   'IntersectionObserver',
   'requestAnimationFrame',
-  'ri05Loft',
-  'ri05WheelSpecs',
-  'MeshPhysicalMaterial',
-  'TorusGeometry',
-  'CircleGeometry',
-  "modelReadout.textContent = 'RI–05'"
+  'RI06_DIGITAL_TWIN',
+  'createCarbonTexture',
+  'loftGeometryRi06',
+  'airfoilGeometry',
+  'PMREMGenerator',
+  'ExtrudeGeometry',
+  'ri06Wheels',
+  'drsFlap',
+  'data-ri06-explode',
+  "modelReadout.textContent = 'RI–06'"
 ]) {
   if (!scene.includes(token)) throw new Error(`3D scene capability missing: ${token}`);
 }
@@ -77,7 +82,7 @@ for (const token of ['showModal', 'is-complete', 'IntersectionObserver', 'data-p
   if (!ui.includes(token)) throw new Error(`Core UI behavior missing: ${token}`);
 }
 
-for (const file of ['assets/favicon.svg', '.github/workflows/deploy-pages.yml']) {
+for (const file of ['assets/favicon.svg', '.github/workflows/deploy-pages.yml', '.github/workflows/validate-pr.yml']) {
   await access(file);
 }
 
@@ -93,4 +98,4 @@ try {
   await rm(validationDir, { recursive: true, force: true });
 }
 
-console.log('Race Intelligence RI-05 integrity checks passed.');
+console.log('Race Intelligence RI-06 integrity checks passed.');
