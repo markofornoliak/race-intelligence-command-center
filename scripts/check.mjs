@@ -41,6 +41,15 @@ if (!css.includes('@media (max-width:760px)')) throw new Error('Mobile layout br
 if (!css.includes('prefers-reduced-motion')) throw new Error('Reduced-motion support is missing.');
 if (!css.includes(':focus-visible')) throw new Error('Keyboard focus styling is missing.');
 
+for (const token of [
+  'RI–05 / DIGITAL TWIN',
+  '.scene-readout::before',
+  '.operations__board::before',
+  '@media (max-width: 900px)'
+]) {
+  if (!css.includes(token)) throw new Error(`RI-05 visual layer missing: ${token}`);
+}
+
 const threeImportPattern = /import\s*\*\s*as\s+THREE\s*from\s*['"]three['"]/;
 if (!threeImportPattern.test(scene)) throw new Error('Three.js namespace import is missing.');
 
@@ -53,7 +62,13 @@ for (const token of [
   'pointerdown',
   'ResizeObserver',
   'IntersectionObserver',
-  'requestAnimationFrame'
+  'requestAnimationFrame',
+  'ri05Loft',
+  'ri05WheelSpecs',
+  'MeshPhysicalMaterial',
+  'TorusGeometry',
+  'CircleGeometry',
+  "modelReadout.textContent = 'RI–05'"
 ]) {
   if (!scene.includes(token)) throw new Error(`3D scene capability missing: ${token}`);
 }
@@ -78,4 +93,4 @@ try {
   await rm(validationDir, { recursive: true, force: true });
 }
 
-console.log('Race Intelligence command-center integrity checks passed.');
+console.log('Race Intelligence RI-05 integrity checks passed.');
