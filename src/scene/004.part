@@ -1,0 +1,125 @@
+    if (event.pointerId !== viewState.pointerId) return;
+    viewState.pointerDown = false;
+    canvas.releasePointerCapture?.(event.pointerId);
+    viewState.pointerId = null;
+  };
+
+  canvas.addEventListener('pointerup', releasePointer);
+  canvas.addEventListener('pointercancel', releasePointer);
+  canvas.addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowLeft') viewState.targetRotationY -= 0.12;
+    if (event.key === 'ArrowRight') viewState.targetRotationY += 0.12;
+    if (event.key === 'ArrowUp') viewState.targetRotationX = Math.max(-0.58, viewState.targetRotationX - 0.08);
+    if (event.key === 'ArrowDown') viewState.targetRotationX = Math.min(0.38, viewState.targetRotationX + 0.08);
+    if (event.key === '1') setMode('systems');
+    if (event.key === '2') setMode('aero');
+    if (event.key === '3') setMode('signal');
+  });
+
+  const resize = () => {
+    const rect = shell.getBoundingClientRect();
+    const width = Math.max(1, rect.width);
+    const height = Math.max(1, rect.height);
+    renderer.setSize(width, height, false);
+    camera.aspect = width / height;
+    camera.updateProjectionMatrix();
+  };
+
+  const resizeObserver = new ResizeObserver(resize);
+  resizeObserver.observe(shell);
+  resize();
+
+  if (geometryNode) geometryNode.textContent = `${renderer.info.memory.geometries + 38} NODES`;
+
+  const tempVector = new THREE.Vector3();
+  const updateLabels = () => {
+    labels.forEach((label) => {
+      const anchor = anchors[label.dataset.anchor];
+      if (!anchor) return;
+      tempVector.copy(anchor);
+      world.localToWorld(tempVector);
+      tempVector.project(camera);
+      const x = (tempVector.x * 0.5 + 0.5) * shell.clientWidth;
+      const y = (-tempVector.y * 0.5 + 0.5) * shell.clientHeight;
+      label.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+      label.style.visibility = tempVector.z > 1 ? 'hidden' : 'visible';
+    });
+  };
+
+  let sceneVisible = true;
+  const visibilityObserver = new IntersectionObserver((entries) => {
+    sceneVisible = Boolean(entries[0]?.isIntersecting);
+  }, { threshold: 0.02 });
+  visibilityObserver.observe(shell);
+
+  let lastFpsUpdate = performance.now();
+  let frameCounter = 0;
+  let elapsed = 0;
+  let firstFrame = true;
+  const clock = new THREE.Clock();
+
+  const animate = () => {
+    requestAnimationFrame(animate);
+    if (!sceneVisible || document.visibilityState !== 'visible') return;
+
+    const delta = Math.min(clock.getDelta(), 0.05);
+    elapsed += delta;
+    frameCounter += 1;
+
+    if (performance.now() - lastFpsUpdate > 1000) {
+      if (fpsNode) fpsNode.textContent = `${frameCounter} FPS`;
+      frameCounter = 0;
+      lastFpsUpdate = performance.now();
+    }
+
+    if (!reducedMotion) {
+      if (!viewState.pointerDown) viewState.targetRotationY += delta * 0.052;
+      viewState.rotationX = THREE.MathUtils.lerp(viewState.rotationX, viewState.targetRotationX, 0.08);
+      viewState.rotationY = THREE.MathUtils.lerp(viewState.rotationY, viewState.targetRotationY, 0.08);
+      world.rotation.x = viewState.rotationX;
+      world.rotation.y = viewState.rotationY;
+
+      wheelGroups.forEach((wheel, index) => {
+        wheel.rotation.z += delta * (index < 2 ? 0.08 : 0.065);
+      });
+      ringGroup.rotation.z += delta * 0.018;
+      stars.rotation.y -= delta * 0.008;
+      scanPlane.position.x = -4.8 + ((elapsed * 0.95) % 10.2);
+      scanPlane.material.opacity = 0.026 + Math.sin(elapsed * 1.9) * 0.012;
+
+      aeroCurves.forEach(({ line, offset }, index) => {
+        const base = activeMode === 'aero' ? 0.42 : 0.045;
+        line.material.opacity = base + Math.sin(elapsed * 1.5 + offset + index) * 0.035;
+      });
+
+      dataParticles.forEach((particle) => {
+        const t = (elapsed * particle.userData.speed + particle.userData.offset) % 1;
+        particle.position.copy(particle.userData.curve.getPointAt(t));
+        const pulse = 0.72 + Math.sin(elapsed * 5 + particle.userData.offset * 12) * 0.25;
+        particle.scale.setScalar(activeMode === 'signal' ? pulse : pulse * 0.42);
+        particle.material.opacity = activeMode === 'signal' ? 0.95 : 0.07;
+      });
+    }
+
+    const hero = document.querySelector('.hero');
+    const heroRect = hero?.getBoundingClientRect();
+    if (heroRect) {
+      const progress = THREE.MathUtils.clamp(-heroRect.top / Math.max(1, heroRect.height), 0, 1);
+      camera.position.y = 4.5 - progress * 0.62;
+      camera.position.x = 10.8 + progress * 0.58;
+      camera.position.z = 14.7 - progress * 0.72;
+    }
+
+    camera.lookAt(0.5, 0.03, 0);
+    updateLabels();
+    renderer.render(scene, camera);
+
+    if (firstFrame) {
+      fallback?.setAttribute('hidden', '');
+      firstFrame = false;
+    }
+  };
+
+  setMode('systems');
+  animate();
+}

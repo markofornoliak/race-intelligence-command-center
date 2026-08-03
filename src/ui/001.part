@@ -1,0 +1,152 @@
+(() => {
+  'use strict';
+
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const boot = document.querySelector('[data-boot]');
+  const header = document.querySelector('[data-header]');
+  const film = document.querySelector('[data-film]');
+  const openFilm = document.querySelector('[data-open-film]');
+  const closeFilm = document.querySelector('[data-close-film]');
+  const filmTime = document.querySelector('[data-film-time]');
+  const filmSteps = [...document.querySelectorAll('.film__sequence i')];
+  const menuToggle = document.querySelector('[data-menu-toggle]');
+  const mobileNav = document.querySelector('[data-mobile-nav]');
+  const navLinks = [...document.querySelectorAll('[data-nav-link]')];
+  const chapterSections = [...document.querySelectorAll('[data-chapter]')];
+  const progressLabel = document.querySelector('[data-progress-label]');
+  const progressBar = document.querySelector('[data-progress-bar]');
+  const clock = document.querySelector('[data-clock]');
+  const latency = document.querySelector('[data-latency]');
+  let filmTimer = null;
+  let filmStartedAt = 0;
+  let lastFocusedElement = null;
+
+  const completeBoot = () => {
+    window.setTimeout(() => boot?.classList.add('is-complete'), reducedMotion ? 0 : 1050);
+  };
+
+  if (document.readyState === 'complete') completeBoot();
+  else window.addEventListener('load', completeBoot, { once: true });
+
+  const updateHeader = () => header?.classList.toggle('is-scrolled', window.scrollY > 28);
+  updateHeader();
+  window.addEventListener('scroll', updateHeader, { passive: true });
+
+  const setMobileNavigation = (open) => {
+    if (!menuToggle || !mobileNav) return;
+    menuToggle.setAttribute('aria-expanded', String(open));
+    menuToggle.setAttribute('aria-label', open ? 'Close navigation' : 'Open navigation');
+    mobileNav.hidden = !open;
+    document.body.classList.toggle('is-locked', open);
+  };
+
+  menuToggle?.addEventListener('click', () => {
+    setMobileNavigation(menuToggle.getAttribute('aria-expanded') !== 'true');
+  });
+
+  mobileNav?.addEventListener('click', (event) => {
+    if (event.target instanceof HTMLAnchorElement) setMobileNavigation(false);
+  });
+
+  const revealItems = [...document.querySelectorAll('[data-reveal]')];
+  if (reducedMotion || !('IntersectionObserver' in window)) {
+    revealItems.forEach((item) => item.classList.add('is-visible'));
+  } else {
+    const revealObserver = new IntersectionObserver((entries, observer) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add('is-visible');
+        observer.unobserve(entry.target);
+      });
+    }, { threshold: 0.13, rootMargin: '0px 0px -8% 0px' });
+    revealItems.forEach((item) => revealObserver.observe(item));
+  }
+
+  const updateChapter = () => {
+    const viewportPoint = window.innerHeight * 0.46;
+    let active = chapterSections[0];
+
+    chapterSections.forEach((section) => {
+      const rect = section.getBoundingClientRect();
+      if (rect.top <= viewportPoint && rect.bottom > viewportPoint) active = section;
+    });
+
+    const chapter = active?.dataset.chapter || '01 / 04';
+    if (progressLabel) progressLabel.textContent = chapter;
+
+    const activeId = active?.id;
+    navLinks.forEach((link) => {
+      link.classList.toggle('is-active', link.getAttribute('href') === `#${activeId}`);
+    });
+
+    const scrollable = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+    const progress = Math.min(1, Math.max(0, window.scrollY / scrollable));
+    if (progressBar) progressBar.style.height = `${progress * 100}%`;
+  };
+
+  updateChapter();
+  window.addEventListener('scroll', updateChapter, { passive: true });
+  window.addEventListener('resize', updateChapter, { passive: true });
+
+  const formatFilmTime = (elapsed) => {
+    const totalFrames = Math.floor(elapsed * 25);
+    const seconds = Math.floor(totalFrames / 25);
+    const frames = totalFrames % 25;
+    return `00:${String(seconds).padStart(2, '0')}:${String(frames).padStart(2, '0')}`;
+  };
+
+  const updateFilm = () => {
+    if (!film?.open) return;
+    const elapsed = Math.min(34, (performance.now() - filmStartedAt) / 1000);
+    if (filmTime) filmTime.textContent = formatFilmTime(elapsed);
+    const activeStep = Math.min(filmSteps.length - 1, Math.floor(elapsed / 8.5));
+    filmSteps.forEach((step, index) => step.classList.toggle('is-active', index <= activeStep));
+    filmTimer = window.requestAnimationFrame(updateFilm);
+  };
+
+  const openFilmModal = () => {
+    if (!film) return;
+    lastFocusedElement = document.activeElement;
+    film.showModal();
+    document.body.classList.add('is-locked');
+    filmStartedAt = performance.now();
+    filmSteps.forEach((step, index) => step.classList.toggle('is-active', index === 0));
+    if (!reducedMotion) filmTimer = window.requestAnimationFrame(updateFilm);
+  };
+
+  const closeFilmModal = () => {
+    if (!film?.open) return;
+    film.close();
+  };
+
+  openFilm?.addEventListener('click', openFilmModal);
+  closeFilm?.addEventListener('click', closeFilmModal);
+  film?.addEventListener('click', (event) => {
+    if (event.target === film) closeFilmModal();
+  });
+  film?.addEventListener('close', () => {
+    document.body.classList.remove('is-locked');
+    if (filmTimer) window.cancelAnimationFrame(filmTimer);
+    filmTimer = null;
+    if (filmTime) filmTime.textContent = '00:00:00';
+    if (lastFocusedElement instanceof HTMLElement) lastFocusedElement.focus();
+  });
+
+  let elapsedSeconds = 0;
+  window.setInterval(() => {
+    elapsedSeconds += 1;
+    if (clock) {
+      const hours = 6 + Math.floor(elapsedSeconds / 3600);
+      const minutes = Math.floor((elapsedSeconds % 3600) / 60);
+      const seconds = elapsedSeconds % 60;
+      clock.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+    if (latency) latency.textContent = `${10 + Math.round(Math.random() * 2)} MS`;
+  }, 1000);
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') return;
+    if (film?.open) closeFilmModal();
+    if (menuToggle?.getAttribute('aria-expanded') === 'true') setMobileNavigation(false);
+  });
+})();
