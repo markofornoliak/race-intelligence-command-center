@@ -1,0 +1,11 @@
+{
+  "name": "race-intelligence-command-center",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node scripts/check.mjs",
+    "build": "node scripts/build.mjs"
+  }
+}
