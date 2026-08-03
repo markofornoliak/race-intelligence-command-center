@@ -1,24 +1,37 @@
 # Race Intelligence Command Center
 
-A cinematic Formula 1 data-performance microsite designed as a confidential race-morning engineering briefing rather than a conventional technology landing page.
+A cinematic Formula 1 data-performance microsite presented as a confidential race-morning engineering briefing rather than a conventional technology landing page.
 
-## Art direction
+## Experience
 
-- full-screen dimensional Formula 1 engineering model
-- translucent chassis volumes and electric-blue edge geometry
-- separate systems, aerodynamic and data-flow views
-- projected engineering annotations
-- minimal editorial interface rather than dashboard cards
-- one red operational accent against a cold blue environment
-- responsive desktop, tablet and mobile composition
+- interactive dimensional Formula 1 engineering model
+- systems, aerodynamic and data-flow visualization modes
+- projected engineering annotations and telemetry
+- live decision matrix and race-operations narrative
+- Citrix HDX campaign chapter
+- accessible dialog, keyboard controls and mobile navigation
+- reduced-motion support and responsive layouts
+- dependency-free production build
 
 ## Technology
 
 - semantic HTML
 - modern CSS
-- Three.js 0.180.0 loaded as an ES module from the pinned jsDelivr URL
-- no build-time dependencies
-- automated GitHub Pages deployment
+- vanilla JavaScript
+- Three.js 0.180.0 loaded as a pinned ES module
+- Node.js validation and static build scripts
+- GitHub Pages deployment workflow
+
+## Source structure
+
+The production files are assembled from ordered, reviewable source parts:
+
+- `src/index/` — semantic page structure
+- `src/styles/` — visual system and responsive layouts
+- `src/scene/` — maintainable Three.js engineering scene
+- `src/ui/` — navigation, reveal, modal and telemetry behavior
+
+Running the build writes the assembled files to the repository root for local preview and to `dist/` for deployment.
 
 ## Run locally
 
@@ -34,3 +47,5 @@ Open `http://localhost:4173`.
 npm test
 npm run build
 ```
+
+The production output is generated in `dist/`.

@@ -1,0 +1,71 @@
+    <section class="hdx chapter" id="hdx" data-chapter="04 / 04" aria-labelledby="hdx-title">
+      <div class="hdx__field" aria-hidden="true">
+        <div class="network-orbit network-orbit--one"></div>
+        <div class="network-orbit network-orbit--two"></div>
+        <div class="network-node network-node--garage"><i></i><span>GARAGE</span></div>
+        <div class="network-node network-node--factory"><i></i><span>FACTORY</span></div>
+        <div class="network-node network-node--specialist"><i></i><span>SPECIALIST</span></div>
+        <div class="network-core"><span>CONTROLLED<br>ENVIRONMENT</span></div>
+      </div>
+
+      <div class="section-shell hdx__shell">
+        <div class="hdx__content">
+          <p class="section-index" data-reveal>03 / THE TRANSMISSION LAYER</p>
+          <h2 id="hdx-title" data-reveal>MOVE THE<br>EXPERIENCE.<br><span>KEEP THE DATA.</span></h2>
+          <p class="hdx__intro" data-reveal>
+            Citrix HDX is the layer beneath the briefing—designed to deliver responsive, high-fidelity application experiences while applications and sensitive datasets remain in the governed environment.
+          </p>
+
+          <div class="hdx__principles" data-reveal>
+            <article>
+              <span>01</span>
+              <div><small>TRANSPORT</small><h3>Adaptive by design</h3><p>Session transport can adapt as network conditions change, protecting continuity without changing the engineer’s workflow.</p></div>
+            </article>
+            <article>
+              <span>02</span>
+              <div><small>EXPERIENCE</small><h3>Graphics intelligence</h3><p>Interactive regions remain responsive while detail refines progressively, preserving the feel of a local engineering workstation.</p></div>
+            </article>
+            <article>
+              <span>03</span>
+              <div><small>CONTROL</small><h3>Centralized governance</h3><p>The application experience travels to the specialist. The controlled data environment does not.</p></div>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="closing" aria-labelledby="closing-title">
+      <div class="closing__rings" aria-hidden="true"></div>
+      <p data-reveal>RACE INTELLIGENCE / FINAL BRIEF</p>
+      <h2 id="closing-title" data-reveal>WHEN THE LIGHTS COME ON,<br><span>THE ANSWER IS ALREADY THERE.</span></h2>
+      <a href="#briefing" data-reveal>RETURN TO 06:00 BRIEFING <span>↑</span></a>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>FORMULA 1 DATA PERFORMANCE / CONCEPT EXPERIENCE</span>
+    <span>INDEPENDENT CREATIVE CONCEPT · NOT AN OFFICIAL F1 OR CITRIX PROPERTY</span>
+  </footer>
+
+  <dialog class="film" data-film aria-labelledby="film-title">
+    <button class="film__close" type="button" data-close-film aria-label="Close briefing">×</button>
+    <div class="film__visual" aria-hidden="true">
+      <div class="film__rings"></div>
+      <div class="film__sweep"></div>
+      <div class="film__car-line"></div>
+      <div class="film__timecode" data-film-time>00:00:00</div>
+    </div>
+    <div class="film__copy">
+      <p>RACE INTELLIGENCE FILM / 00:34</p>
+      <h2 id="film-title">THE LAP BEGINS BEFORE THE CAR MOVES.</h2>
+      <span>Telemetry. Simulation. Human judgment. One controlled environment.</span>
+      <div class="film__sequence">
+        <i class="is-active"></i><i></i><i></i><i></i>
+      </div>
+    </div>
+  </dialog>
+
+  <script src="ui.js" defer></script>
+  <script type="module" src="scene.js"></script>
+</body>
+</html>

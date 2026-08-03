@@ -1,0 +1,195 @@
+  addWirePart(new THREE.BoxGeometry(7.5, 0.12, 3.12, 14, 1, 7), {
+    position: [0.4, -0.72, 0],
+    category: 'systems',
+    surfaceOpacity: 0.07,
+    edgeOpacity: 0.6
+  });
+
+  addWirePart(wedgeGeometry(5.25, 0.74, 0.34, 1.62), {
+    position: [-2.56, -0.12, 0],
+    category: 'systems',
+    surfaceOpacity: 0.13,
+    edgeOpacity: 0.94
+  });
+
+  addWirePart(wedgeGeometry(3.4, 1.22, 1.58, 2.18), {
+    position: [1.03, 0.02, 0],
+    category: 'systems',
+    surfaceOpacity: 0.15,
+    edgeOpacity: 0.92
+  });
+
+  addWirePart(new THREE.CapsuleGeometry(0.72, 1.62, 6, 14), {
+    position: [0.02, 0.69, 0],
+    rotation: [0, 0, Math.PI / 2],
+    scale: [1, 0.72, 0.92],
+    category: 'systems',
+    surfaceOpacity: 0.08,
+    edgeOpacity: 0.74
+  });
+
+  addWirePart(wedgeGeometry(2.72, 0.82, 1.18, 0.78), {
+    position: [3.77, 0.15, 0],
+    category: 'systems',
+    surfaceOpacity: 0.11,
+    edgeOpacity: 0.84
+  });
+
+  [-1, 1].forEach((side) => {
+    addWirePart(wedgeGeometry(2.5, 0.84, 0.54, 0.96), {
+      position: [1.26, -0.03, side * 1.1],
+      rotation: [0, side * -0.06, 0],
+      category: 'systems',
+      surfaceOpacity: 0.11,
+      edgeOpacity: 0.78
+    });
+
+    addWirePart(wedgeGeometry(1.9, 0.26, 0.56, 0.88), {
+      position: [-0.82, -0.38, side * 1.26],
+      category: 'aero',
+      surfaceOpacity: 0.05,
+      edgeOpacity: 0.66
+    });
+  });
+
+  const tireMaterial = new THREE.MeshPhysicalMaterial({
+    color: 0x02070c,
+    roughness: 0.74,
+    metalness: 0.04,
+    transparent: true,
+    opacity: 0.74,
+    depthWrite: false
+  });
+
+  const wheelGroups = [];
+  const makeWheel = (x, z, front = false) => {
+    const radius = front ? 0.78 : 0.87;
+    const width = front ? 0.54 : 0.62;
+    const group = new THREE.Group();
+    group.position.set(x, -0.55, z);
+    car.add(group);
+
+    const tireGeometry = new THREE.CylinderGeometry(radius, radius, width, 36, 1, true);
+    const tire = new THREE.Mesh(tireGeometry, tireMaterial.clone());
+    tire.rotation.x = Math.PI / 2;
+    group.add(tire);
+
+    const tireEdges = new THREE.LineSegments(
+      new THREE.EdgesGeometry(new THREE.CylinderGeometry(radius, radius, width, 20, 1, true), 8),
+      lineMaterial('systems', 0.56)
+    );
+    tireEdges.rotation.x = Math.PI / 2;
+    group.add(tireEdges);
+
+    addWirePart(new THREE.CylinderGeometry(radius * 0.52, radius * 0.52, width * 1.03, 20, 1, true), {
+      parent: group,
+      rotation: [Math.PI / 2, 0, 0],
+      category: 'systems',
+      surfaceOpacity: 0.05,
+      edgeOpacity: 0.68,
+      glow: false
+    });
+
+    addWirePart(new THREE.CylinderGeometry(radius * 0.16, radius * 0.16, width * 1.12, 12), {
+      parent: group,
+      rotation: [Math.PI / 2, 0, 0],
+      category: 'systems',
+      surfaceOpacity: 0.1,
+      edgeOpacity: 0.82,
+      glow: false
+    });
+
+    for (let index = 0; index < 10; index += 1) {
+      const angle = (index / 10) * Math.PI * 2;
+      const spoke = new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(0, Math.cos(angle) * radius * 0.47, Math.sin(angle) * radius * 0.47),
+          new THREE.Vector3(0, 0, 0)
+        ]),
+        lineMaterial('systems', 0.44)
+      );
+      spoke.rotation.y = Math.PI / 2;
+      group.add(spoke);
+    }
+
+    register(group, 'systems');
+    wheelGroups.push(group);
+  };
+
+  makeWheel(-2.92, -1.75, true);
+  makeWheel(-2.92, 1.75, true);
+  makeWheel(3.18, -1.84, false);
+  makeWheel(3.18, 1.84, false);
+
+  [-1, 1].forEach((side) => {
+    makeStrut([-2.0, -0.03, side * 0.78], [-2.92, -0.55, side * 1.75], 0.032);
+    makeStrut([-2.18, -0.44, side * 0.76], [-2.92, -0.55, side * 1.75], 0.026);
+    makeStrut([-1.84, 0.26, side * 0.65], [-2.92, -0.55, side * 1.75], 0.024);
+    makeStrut([2.47, 0.14, side * 0.72], [3.18, -0.55, side * 1.84], 0.033);
+    makeStrut([2.3, -0.42, side * 0.72], [3.18, -0.55, side * 1.84], 0.027);
+    makeStrut([2.72, 0.4, side * 0.58], [3.18, -0.55, side * 1.84], 0.024);
+  });
+
+  makeWingElement([-5.08, -0.33, 0], [1.22, 0.07, 3.48], [0, 0, -0.03]);
+  makeWingElement([-4.84, -0.08, 0], [0.86, 0.05, 3.08], [0, 0, -0.1]);
+  makeWingElement([-4.57, 0.13, 0], [0.53, 0.045, 2.58], [0, 0, -0.16]);
+  makeWingElement([-5.02, -0.04, -1.8], [0.62, 0.58, 0.04]);
+  makeWingElement([-5.02, -0.04, 1.8], [0.62, 0.58, 0.04]);
+
+  makeWingElement([4.67, 1.18, 0], [0.88, 0.09, 2.68], [0, 0, 0.04]);
+  makeWingElement([4.47, 0.92, 0], [0.62, 0.06, 2.38], [0, 0, -0.06]);
+  makeWingElement([4.8, 0.82, -1.38], [0.16, 0.76, 0.05]);
+  makeWingElement([4.8, 0.82, 1.38], [0.16, 0.76, 0.05]);
+  makeStrut([4.22, 0.25, -0.35], [4.56, 1.12, -0.35], 0.04, 'aero');
+  makeStrut([4.22, 0.25, 0.35], [4.56, 1.12, 0.35], 0.04, 'aero');
+
+  [-1, 1].forEach((side) => {
+    makeWingElement([3.96, -0.52, side * 0.94], [0.93, 0.055, 0.7], [0, side * 0.08, side * 0.12]);
+    makeWingElement([4.24, -0.37, side * 1.22], [0.69, 0.045, 0.45], [0, side * 0.14, side * 0.2]);
+  });
+
+  const haloCurve = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(-0.56, 0.64, -0.53),
+    new THREE.Vector3(-0.16, 1.22, -0.65),
+    new THREE.Vector3(0.43, 1.39, 0),
+    new THREE.Vector3(-0.16, 1.22, 0.65),
+    new THREE.Vector3(-0.56, 0.64, 0.53)
+  ]);
+  addWirePart(new THREE.TubeGeometry(haloCurve, 52, 0.055, 8, false), {
+    category: 'systems',
+    surfaceOpacity: 0.12,
+    edgeOpacity: 0.9
+  });
+  makeStrut([0.43, 1.39, 0], [0.59, 0.64, 0], 0.05, 'systems', 0.92);
+
+  addWirePart(new THREE.TorusGeometry(0.26, 0.045, 8, 24), {
+    position: [1.72, 1.08, 0],
+    rotation: [Math.PI / 2, 0, 0],
+    scale: [1, 1.25, 1],
+    category: 'systems',
+    surfaceOpacity: 0.07,
+    edgeOpacity: 0.7
+  });
+
+  const aeroCurves = [];
+  const addFlowCurve = (points, offset = 0) => {
+    const curve = new THREE.CatmullRomCurve3(points);
+    const line = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints(curve.getPoints(120)),
+      lineMaterial('aero', 0.32)
+    );
+    line.userData.offset = offset;
+    world.add(line);
+    register(line, 'aero');
+    aeroCurves.push({ line, offset });
+  };
+
+  for (let lane = -2; lane <= 2; lane += 1) {
+    const z = lane * 0.62;
+    addFlowCurve([
+      new THREE.Vector3(-7.2, 0.2 + Math.abs(lane) * 0.08, z * 1.25),
+      new THREE.Vector3(-4.8, 0.18, z),
+      new THREE.Vector3(-2.4, 0.55 + Math.abs(lane) * 0.12, z * 0.8),
+      new THREE.Vector3(0.4, 0.68, z * 0.72),
+      new THREE.Vector3(3.1, 0.35 + Math.abs(lane) * 0.1, z * 0.9),
+      new THREE.Vector3(6.4, 0.95 + Math.abs(lane) * 0.2, z * 1.5)

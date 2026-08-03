@@ -1,0 +1,107 @@
+            <span class="film-trigger__icon" aria-hidden="true"></span>
+            <span>PLAY BRIEFING</span>
+            <span class="film-trigger__dot" aria-hidden="true"></span>
+          </button>
+          <a class="text-link" href="#hdx">EXPLORE CITRIX HDX <span>↘</span></a>
+        </div>
+      </div>
+
+      <div class="hero__telemetry" aria-label="Illustrative race engineering indicators">
+        <div><span>SESSION</span><strong data-clock>06:00:00</strong><small>RACE MORNING</small></div>
+        <div><span>TRACK</span><strong>18.7°C</strong><small>LOW GRIP / EVOLVING</small></div>
+        <div><span>MODEL CONFIDENCE</span><strong>99.7%</strong><small>SHARED RACE STATE</small></div>
+        <div><span>REMOTE LATENCY</span><strong data-latency>11 MS</strong><small>FACTORY ↔ GARAGE</small></div>
+      </div>
+
+      <div class="hero__scroll" aria-hidden="true"><span></span>ENTER THE BRIEFING</div>
+    </section>
+
+    <section class="manifesto chapter" id="signal" data-chapter="02 / 04" aria-labelledby="manifesto-title">
+      <div class="section-shell">
+        <div class="section-index" data-reveal>01 / INFORMATION ADVANTAGE</div>
+        <div class="manifesto__grid">
+          <div class="manifesto__headline" data-reveal>
+            <p>THE RACE IS DECIDED IN THE DISTANCE BETWEEN</p>
+            <h2 id="manifesto-title">SIGNAL<br><span>AND ACTION.</span></h2>
+          </div>
+          <div class="manifesto__copy" data-reveal>
+            <p class="lead">A Formula 1 car produces no shortage of information. The advantage is shortening the path from a changing condition to a coordinated engineering decision.</p>
+            <p>One race state. High-fidelity technical applications. Predictable access for specialists at the circuit, factory and beyond.</p>
+          </div>
+        </div>
+
+        <div class="signal-line" data-reveal aria-label="Race intelligence decision sequence">
+          <article>
+            <span class="signal-line__number">01</span>
+            <div class="signal-line__icon" aria-hidden="true"><i></i></div>
+            <small>CAPTURE</small>
+            <h3>The car speaks in systems.</h3>
+            <p>Suspension displacement, tyre energy, aerodynamic balance and thermal state become one changing model.</p>
+          </article>
+          <article>
+            <span class="signal-line__number">02</span>
+            <div class="signal-line__icon" aria-hidden="true"><i></i></div>
+            <small>RESOLVE</small>
+            <h3>The model removes ambiguity.</h3>
+            <p>Every engineer sees the same evidence at the same moment, without reconciling disconnected versions of truth.</p>
+          </article>
+          <article>
+            <span class="signal-line__number">03</span>
+            <div class="signal-line__icon" aria-hidden="true"><i></i></div>
+            <small>ACT</small>
+            <h3>The answer arrives before the corner.</h3>
+            <p>Responsive access converts analysis into setup, strategy and intervention while the opportunity still exists.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="operations chapter" id="operations" data-chapter="03 / 04" aria-labelledby="operations-title">
+      <div class="section-shell operations__shell">
+        <div class="operations__intro">
+          <div class="section-index" data-reveal>02 / PIT WALL OPERATING SYSTEM</div>
+          <h2 id="operations-title" data-reveal>ONE LAP.<br><span>ONE DECISION STATE.</span></h2>
+          <p data-reveal>Five distributed teams read the same race, but each one needs a different slice of the model. The advantage is keeping those perspectives synchronized under pressure.</p>
+        </div>
+
+        <div class="operations__board" data-reveal>
+          <div class="board__header">
+            <span>LIVE DECISION MATRIX</span>
+            <span class="board__status"><i></i> ALL NODES SYNCHRONIZED</span>
+          </div>
+          <div class="board__track" aria-hidden="true">
+            <div class="track-map">
+              <svg viewBox="0 0 640 320">
+                <path d="M93 223C34 189 63 97 151 95c53-1 85 30 128 13 45-18 43-70 104-73 74-4 112 61 82 116-21 39 8 73 48 61 75-23 97 54 45 79-41 20-81-3-127 1-57 6-77 35-137 22-42-9-65-46-105-44-44 2-61-24-96-47Z" />
+              </svg>
+              <span class="track-dot track-dot--1"></span>
+              <span class="track-dot track-dot--2"></span>
+              <span class="track-dot track-dot--3"></span>
+              <span class="track-dot track-dot--4"></span>
+              <span class="track-dot track-dot--5"></span>
+              <div class="track-callout"><span>TURN 11</span><strong>+0.18 S</strong><small>TRACTION OPPORTUNITY</small></div>
+            </div>
+            <div class="track-readout">
+              <div><span>TYRE WINDOW</span><strong>92.4°C</strong><i style="--value:74%"></i></div>
+              <div><span>ENERGY DEPLOY</span><strong>84%</strong><i style="--value:84%"></i></div>
+              <div><span>BRAKE BALANCE</span><strong>55.8%</strong><i style="--value:56%"></i></div>
+              <div><span>FUEL DELTA</span><strong>−0.7 KG</strong><i style="--value:66%"></i></div>
+            </div>
+          </div>
+          <div class="board__timeline">
+            <article><span>05:42:11</span><strong>SIMULATION</strong><p>Setup convergence completed.</p><em>READY</em></article>
+            <article><span>05:51:08</span><strong>FACTORY</strong><p>Long-run degradation model updated.</p><em>SYNC</em></article>
+            <article><span>05:56:33</span><strong>GARAGE</strong><p>Rear ride-height sensitivity verified.</p><em>SYNC</em></article>
+            <article class="is-current"><span>06:00:00</span><strong>PIT WALL</strong><p>Decision state released to session.</p><em>LIVE</em></article>
+          </div>
+        </div>
+
+        <div class="operations__metrics" data-reveal>
+          <article><span>01</span><strong>46</strong><p>engineering applications in the shared race environment</p></article>
+          <article><span>02</span><strong>5</strong><p>specialist locations working from one decision state</p></article>
+          <article><span>03</span><strong>11 ms</strong><p>illustrative remote interaction latency under race conditions</p></article>
+          <article><span>04</span><strong>0</strong><p>copies of governed datasets required at the edge</p></article>
+        </div>
+      </div>
+    </section>
+

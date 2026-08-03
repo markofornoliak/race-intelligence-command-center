@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#02050a" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="description" content="Race Intelligence is a cinematic Formula 1 engineering briefing about turning distributed data into race-day decisions." />
+  <meta property="og:title" content="Race Intelligence — Efficient Data Access" />
+  <meta property="og:description" content="Speed is an information problem already solved." />
+  <meta property="og:type" content="website" />
+  <title>Race Intelligence — Efficient Data Access</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="styles.css" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js"
+      }
+    }
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#briefing">Skip to briefing</a>
+
+  <div class="boot" data-boot aria-hidden="true">
+    <div class="boot__mark"><span></span><span></span></div>
+    <div class="boot__copy">
+      <strong>RACE INTELLIGENCE</strong>
+      <span>ESTABLISHING ENGINEERING LINK</span>
+    </div>
+    <div class="boot__line"><i></i></div>
+    <div class="boot__status">
+      <span>FACTORY / LINKED</span>
+      <span>GARAGE / LINKED</span>
+      <span>MODEL / READY</span>
+    </div>
+  </div>
+
+  <header class="topline" data-header>
+    <a class="identity" href="#briefing" aria-label="Race Intelligence home">
+      <span class="identity__sigil" aria-hidden="true"><i></i></span>
+      <span>RACE / INTELLIGENCE</span>
+    </a>
+
+    <nav class="topline__nav" aria-label="Primary navigation" data-nav>
+      <a href="#briefing" data-nav-link>Briefing</a>
+      <a href="#signal" data-nav-link>Signal</a>
+      <a href="#operations" data-nav-link>Operations</a>
+      <a href="#hdx" data-nav-link>HDX</a>
+    </nav>
+
+    <div class="topline__status" aria-label="Illustrative live session status">
+      <span class="live-dot"></span>
+      <span>RACE DAY · SESSION LINKED</span>
+    </div>
+
+    <button class="menu-toggle" type="button" data-menu-toggle aria-expanded="false" aria-controls="mobile-navigation" aria-label="Open navigation">
+      <span></span><span></span>
+    </button>
+  </header>
+
+  <div class="mobile-nav" id="mobile-navigation" data-mobile-nav hidden>
+    <p>SESSION NAVIGATION</p>
+    <a href="#briefing">01 / Briefing</a>
+    <a href="#signal">02 / Signal</a>
+    <a href="#operations">03 / Operations</a>
+    <a href="#hdx">04 / HDX</a>
+  </div>
+
+  <div class="chapter-progress" aria-hidden="true">
+    <span data-progress-label>01 / 04</span>
+    <i><b data-progress-bar></b></i>
+    <em>SCROLL TO ADVANCE</em>
+  </div>
+
+  <main>
+    <section class="hero chapter" id="briefing" data-chapter="01 / 04" aria-labelledby="hero-title">
+      <div class="hero__atmosphere" aria-hidden="true">
+        <div class="radar radar--one"></div>
+        <div class="radar radar--two"></div>
+        <div class="scan"></div>
+        <div class="grid-plane"></div>
+        <div class="grain"></div>
+      </div>
+
+      <div class="hero__scene" data-scene-shell>
+        <canvas id="carScene" tabindex="0" aria-label="Interactive 3D wireframe Formula 1 engineering model. Drag or use arrow keys to inspect the car.">
+          A three-dimensional Formula 1 car is shown as a luminous engineering wireframe.
+        </canvas>
+
+        <div class="scene-fallback" data-scene-fallback>
+          <svg viewBox="0 0 1200 540" role="img" aria-label="Technical Formula 1 car wireframe illustration">
+            <g fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M43 320 155 304l70-88 205-22 67-70h178l68 84 222 31 114 75-82 34-112-12c-19 83-91 140-179 140-89 0-161-58-179-143H402c-18 85-91 143-179 143-88 0-160-58-178-142L18 334z"/>
+              <circle cx="223" cy="330" r="116"/><circle cx="706" cy="330" r="116"/>
+              <circle cx="223" cy="330" r="68"/><circle cx="706" cy="330" r="68"/>
+              <path d="m233 216 74-57 157-9 48-56m-14 28 42-73h109l92 159m6 1 88-62 135 7 112 159M72 321l64-67 112-11m710 1 37-97h112l54 113M402 318l39-124m99 121 2-166m86 164 85-105"/>
+              <path opacity=".35" d="M132 295 990 235M101 346l930-2M311 157l618 57M485 122l225 207"/>
+            </g>
+          </svg>
+        </div>
+
+        <div class="scene-label" data-anchor="front">
+          <span>01 / FRONT AERO</span>
+          <strong>PRESSURE MAP RESOLVED</strong>
+        </div>
+        <div class="scene-label" data-anchor="cockpit">
+          <span>02 / DRIVER CELL</span>
+          <strong>SHARED RACE STATE</strong>
+        </div>
+        <div class="scene-label" data-anchor="rear">
+          <span>03 / REAR PLATFORM</span>
+          <strong>THERMAL WINDOW STABLE</strong>
+        </div>
+
+        <div class="scene-readout" aria-hidden="true">
+          <div><span>MODEL</span><strong>RI–04</strong></div>
+          <div><span>GEOMETRY</span><strong data-geometry-count>READY</strong></div>
+          <div><span>LINK</span><strong>11 MS</strong></div>
+          <div><span>FRAME</span><strong data-fps>SYNC</strong></div>
+        </div>
+
+        <div class="scene-controls" aria-label="3D visualization controls">
+          <button type="button" class="scene-mode is-active" data-mode="systems" aria-pressed="true">SYSTEMS</button>
+          <button type="button" class="scene-mode" data-mode="aero" aria-pressed="false">AERO</button>
+          <button type="button" class="scene-mode" data-mode="signal" aria-pressed="false">DATA FLOW</button>
+          <button type="button" class="scene-reset" data-reset>RESET</button>
+        </div>
+      </div>
+
+      <div class="hero__copy" data-reveal>
+        <p class="eyebrow">CLASSIFIED ENGINEERING BRIEF / CHAPTER 03</p>
+        <p class="hero__prefix">DRIVING PERFORMANCE WITH</p>
+        <h1 id="hero-title">EFFICIENT<br><span>DATA ACCESS</span></h1>
+        <p class="hero__statement">Speed is an information problem already solved.</p>
+        <p class="hero__body">
+          Before the garage wakes, the car is already a decision model—every surface, load and temperature visible to the people who can change the outcome.
+        </p>
+        <div class="hero__actions">
+          <button class="film-trigger" type="button" data-open-film aria-haspopup="dialog">

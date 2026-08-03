@@ -1,0 +1,209 @@
+import * as THREE from 'three';
+
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const shell = document.querySelector('[data-scene-shell]');
+const canvas = document.querySelector('#carScene');
+const fallback = document.querySelector('[data-scene-fallback]');
+const fpsNode = document.querySelector('[data-fps]');
+const geometryNode = document.querySelector('[data-geometry-count]');
+const modeButtons = [...document.querySelectorAll('[data-mode]')];
+const resetButton = document.querySelector('[data-reset]');
+const labels = [...document.querySelectorAll('[data-anchor]')];
+
+if (!shell || !(canvas instanceof HTMLCanvasElement)) {
+  throw new Error('3D scene shell is missing.');
+}
+
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({
+    canvas,
+    alpha: true,
+    antialias: true,
+    powerPreference: 'high-performance',
+    preserveDrawingBuffer: false
+  });
+} catch (error) {
+  canvas.hidden = true;
+  fallback?.removeAttribute('hidden');
+  console.error('WebGL initialization failed.', error);
+}
+
+if (renderer) {
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.6));
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.12;
+  renderer.setClearColor(0x000000, 0);
+  renderer.sortObjects = true;
+
+  const scene = new THREE.Scene();
+  scene.fog = new THREE.FogExp2(0x02050a, 0.034);
+
+  const camera = new THREE.PerspectiveCamera(31, 1, 0.1, 100);
+  camera.position.set(10.8, 4.5, 14.7);
+
+  scene.add(new THREE.AmbientLight(0x79c8ff, 0.34));
+
+  const keyLight = new THREE.DirectionalLight(0xa7ddff, 2.35);
+  keyLight.position.set(-5, 8, 10);
+  scene.add(keyLight);
+
+  const rimLight = new THREE.DirectionalLight(0x338fff, 1.55);
+  rimLight.position.set(7, 2, -8);
+  scene.add(rimLight);
+
+  const redLight = new THREE.PointLight(0xff3138, 4.6, 16, 2);
+  redLight.position.set(-6.2, 0.1, 4.2);
+  scene.add(redLight);
+
+  const world = new THREE.Group();
+  world.position.set(0.75, -0.15, 0);
+  world.rotation.set(-0.08, -0.5, 0.015);
+  scene.add(world);
+
+  const car = new THREE.Group();
+  car.scale.setScalar(0.93);
+  world.add(car);
+
+  const categoryObjects = {
+    systems: [],
+    aero: [],
+    signal: []
+  };
+
+  const categoryColors = {
+    systems: new THREE.Color(0x73c7ff),
+    aero: new THREE.Color(0xc4edff),
+    signal: new THREE.Color(0x63e2ff)
+  };
+
+  const register = (object, category) => {
+    object.userData.category = category;
+    categoryObjects[category].push(object);
+    return object;
+  };
+
+  const surfaceMaterial = (category = 'systems', opacity = 0.12) => {
+    const color = category === 'aero' ? 0x4b99c7 : category === 'signal' ? 0x28bfe7 : 0x0a4d77;
+    const material = new THREE.MeshPhysicalMaterial({
+      color,
+      metalness: 0.2,
+      roughness: 0.46,
+      transparent: true,
+      opacity,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      clearcoat: 0.28,
+      emissive: category === 'signal' ? 0x04232f : 0x03111d,
+      emissiveIntensity: 0.75
+    });
+    material.userData.baseOpacity = opacity;
+    return material;
+  };
+
+  const lineMaterial = (category = 'systems', opacity = 0.8) => {
+    const material = new THREE.LineBasicMaterial({
+      color: categoryColors[category],
+      transparent: true,
+      opacity,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending
+    });
+    material.userData.baseOpacity = opacity;
+    return material;
+  };
+
+  const addWirePart = (geometry, options = {}) => {
+    const {
+      parent = car,
+      position = [0, 0, 0],
+      rotation = [0, 0, 0],
+      scale = [1, 1, 1],
+      category = 'systems',
+      surfaceOpacity = 0.12,
+      edgeOpacity = 0.82,
+      glow = true
+    } = options;
+
+    const group = new THREE.Group();
+    group.position.set(...position);
+    group.rotation.set(...rotation);
+    group.scale.set(...scale);
+    parent.add(group);
+
+    const surface = new THREE.Mesh(geometry, surfaceMaterial(category, surfaceOpacity));
+    group.add(surface);
+
+    const edges = new THREE.LineSegments(
+      new THREE.EdgesGeometry(geometry, 20),
+      lineMaterial(category, edgeOpacity)
+    );
+    edges.renderOrder = 3;
+    group.add(edges);
+
+    if (glow) {
+      const glowMaterial = new THREE.MeshBasicMaterial({
+        color: categoryColors[category],
+        wireframe: true,
+        transparent: true,
+        opacity: category === 'systems' ? 0.038 : 0.052,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending
+      });
+      glowMaterial.userData.baseOpacity = glowMaterial.opacity;
+      const glowMesh = new THREE.Mesh(geometry, glowMaterial);
+      glowMesh.scale.multiplyScalar(1.006);
+      group.add(glowMesh);
+    }
+
+    return register(group, category);
+  };
+
+  const wedgeGeometry = (length, height, frontWidth, rearWidth) => {
+    const l = length / 2;
+    const h = height / 2;
+    const fw = frontWidth / 2;
+    const rw = rearWidth / 2;
+    const vertices = new Float32Array([
+      -l, -h, -fw, -l, -h, fw, -l, h, -fw, -l, h, fw,
+      l, -h, -rw, l, -h, rw, l, h, -rw, l, h, rw
+    ]);
+    const indices = [
+      0, 1, 2, 2, 1, 3,
+      4, 6, 5, 6, 7, 5,
+      0, 4, 1, 1, 4, 5,
+      2, 3, 6, 6, 3, 7,
+      0, 2, 4, 4, 2, 6,
+      1, 5, 3, 3, 5, 7
+    ];
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+    geometry.setIndex(indices);
+    geometry.computeVertexNormals();
+    return geometry;
+  };
+
+  const makeStrut = (startValue, endValue, radius = 0.03, category = 'systems', opacity = 0.9) => {
+    const start = new THREE.Vector3(...startValue);
+    const end = new THREE.Vector3(...endValue);
+    const midpoint = start.clone().add(end).multiplyScalar(0.5);
+    const direction = end.clone().sub(start);
+    const length = direction.length();
+    const geometry = new THREE.CylinderGeometry(radius, radius, length, 8, 1, true);
+    const part = addWirePart(geometry, {
+      position: midpoint.toArray(),
+      category,
+      surfaceOpacity: 0.045,
+      edgeOpacity: opacity,
+      glow: false
+    });
+    part.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction.normalize());
+    return part;
+  };
+
+  const makeWingElement = (position, scale, rotation = [0, 0, 0], category = 'aero') => addWirePart(
+    new THREE.BoxGeometry(1, 1, 1, 8, 1, 3),
+    { position, rotation, scale, category, surfaceOpacity: 0.07, edgeOpacity: 0.86 }
+  );
+
