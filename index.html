@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#02050a" />
+  <meta name="description" content="Race Intelligence — a cinematic Formula 1 engineering briefing with a live 3D wireframe car and data-access story." />
+  <meta property="og:title" content="Race Intelligence — Efficient Data Access" />
+  <meta property="og:description" content="Speed is an information problem already solved." />
+  <title>Race Intelligence — Efficient Data Access</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="styles.css" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js"
+      }
+    }
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#briefing">Skip to briefing</a>
+
+  <div class="boot" data-boot aria-hidden="true">
+    <div class="boot__line"><span></span></div>
+    <div class="boot__meta">
+      <span>RACE INTELLIGENCE</span>
+      <span>LINKING ENGINEERING ENVIRONMENT</span>
+      <span>06:00:00</span>
+    </div>
+  </div>
+
+  <header class="topline" data-header>
+    <a class="identity" href="#briefing" aria-label="Race Intelligence home">
+      <span class="identity__sigil" aria-hidden="true"></span>
+      <span>RACE / INTELLIGENCE</span>
+    </a>
+
+    <nav class="topline__nav" aria-label="Primary navigation">
+      <a href="#briefing">03 Briefing</a>
+      <a href="#signal">Signal</a>
+      <a href="#hdx">HDX</a>
+    </nav>
+
+    <div class="topline__status" aria-label="Illustrative live session status">
+      <span class="live-dot"></span>
+      <span>RACE DAY · SESSION LINKED</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero" id="briefing" aria-labelledby="hero-title">
+      <div class="hero__atmosphere" aria-hidden="true">
+        <div class="radar radar--one"></div>
+        <div class="radar radar--two"></div>
+        <div class="scan"></div>
+        <div class="grain"></div>
+      </div>
+
+      <div class="hero__scene" data-scene-shell>
+        <canvas id="carScene" tabindex="0" aria-label="Interactive 3D wireframe Formula 1 engineering model. Drag or use arrow keys to inspect the car.">
+          A three-dimensional Formula 1 car is shown as a luminous engineering wireframe.
+        </canvas>
+
+        <div class="scene-fallback" data-scene-fallback>
+          <svg viewBox="0 0 1200 540" role="img" aria-label="Technical Formula 1 car wireframe illustration">
+            <g fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M56 326L160 314l72-98 200-18 62-77h176l72 92 225 31 100 68-76 34-116-14c-18 86-91 145-180 145-91 0-164-60-181-147H403c-18 87-91 147-181 147-88 0-162-59-180-145L20 337z"/>
+              <circle cx="222" cy="330" r="118"/><circle cx="695" cy="330" r="118"/>
+              <circle cx="222" cy="330" r="72"/><circle cx="695" cy="330" r="72"/>
+              <path d="M232 216l74-58 157-8 50-59m-19 30 42-73h110l89 165m7 0 92-65 130 5 103 159M74 326l62-71 114-10M945 246l35-99h112l50 113M406 320l37-126m96 123 3-168m86 166 84-102"/>
+            </g>
+          </svg>
+        </div>
+
+        <div class="scene-label scene-label--front" data-anchor="front">
+          <span>01 / FRONT AERO</span>
+          <strong>LOAD PATH RESOLVED</strong>
+        </div>
+        <div class="scene-label scene-label--cockpit" data-anchor="cockpit">
+          <span>02 / DRIVER CELL</span>
+          <strong>SHARED RACE STATE</strong>
+        </div>
+        <div class="scene-label scene-label--rear" data-anchor="rear">
+          <span>03 / REAR PLATFORM</span>
+          <strong>THERMAL WINDOW STABLE</strong>
+        </div>
+
+        <div class="scene-readout" aria-hidden="true">
+          <div><span>MODEL</span><strong>RI–03</strong></div>
+          <div><span>GEOMETRY</span><strong data-geometry-count>—</strong></div>
+          <div><span>LINK</span><strong>11 MS</strong></div>
+          <div><span>FRAME</span><strong data-fps>SYNC</strong></div>
+        </div>
+
+        <div class="scene-controls" aria-label="3D visualization controls">
+          <button type="button" class="scene-mode is-active" data-mode="systems">SYSTEMS</button>
+          <button type="button" class="scene-mode" data-mode="aero">AERO</button>
+          <button type="button" class="scene-mode" data-mode="signal">DATA FLOW</button>
+          <button type="button" class="scene-reset" data-reset>RESET VIEW</button>
+        </div>
+      </div>
+
+      <div class="hero__copy">
+        <p class="hero__classification">CLASSIFIED ENGINEERING BRIEF / CHAPTER 03</p>
+        <p class="hero__prefix">DRIVING PERFORMANCE WITH</p>
+        <h1 id="hero-title">EFFICIENT<br><span>DATA ACCESS</span></h1>
+        <p class="hero__statement">Speed is an information problem already solved.</p>
+        <p class="hero__body">
+          Before the garage wakes, the car has already become a decision model—every surface, load and temperature visible to the people who can change the outcome.
+        </p>
+        <div class="hero__actions">
+          <button class="film-trigger" type="button" data-open-film aria-haspopup="dialog">
+            <span class="film-trigger__icon" aria-hidden="true"></span>
+            <span>PLAY VIDEO</span>
+            <span class="film-trigger__dot" aria-hidden="true"></span>
+          </button>
+          <a class="hdx-link" href="#hdx">LEARN ABOUT CITRIX HDX TECHNOLOGY <span>↘</span></a>
+        </div>
+      </div>
+
+      <aside class="mission-rail" aria-label="Mission chapter three of three">
+        <span class="mission-rail__count">03 / 03</span>
+        <div class="mission-rail__track"><i></i></div>
+        <span class="mission-rail__label">DATA ACCESS</span>
+      </aside>
+
+      <div class="hero__telemetry" aria-label="Illustrative race engineering indicators">
+        <div><span>SESSION</span><strong>06:00:00</strong><small>RACE MORNING</small></div>
+        <div><span>TRACK</span><strong>18.7°C</strong><small>LOW GRIP / EVOLVING</small></div>
+        <div><span>MODEL CONFIDENCE</span><strong>99.7%</strong><small>SHARED RACE STATE</small></div>
+        <div><span>REMOTE LATENCY</span><strong>11 MS</strong><small>FACTORY ↔ GARAGE</small></div>
+      </div>
+    </section>
+
+    <section class="manifesto" id="signal" aria-labelledby="manifesto-title">
+      <div class="manifesto__index">01 / INFORMATION ADVANTAGE</div>
+      <div class="manifesto__grid">
+        <div class="manifesto__headline">
+          <p>THE RACE IS DECIDED IN THE DISTANCE BETWEEN</p>
+          <h2 id="manifesto-title">SIGNAL<br><span>AND ACTION.</span></h2>
+        </div>
+        <div class="manifesto__copy">
+          <p class="manifesto__lead">A Formula 1 car produces no shortage of information. The advantage is shortening the path from a changing condition to a coordinated engineering decision.</p>
+          <p>That requires one race state, high-fidelity technical applications and predictable access for specialists at the circuit, factory and beyond.</p>
+        </div>
+      </div>
+
+      <div class="sequence" aria-label="Race intelligence sequence">
+        <article>
+          <span>01</span>
+          <div>
+            <small>CAPTURE</small>
+            <h3>The car speaks in systems.</h3>
+            <p>Suspension displacement, tyre energy, aerodynamic balance and thermal state become one changing model.</p>
+          </div>
+        </article>
+        <article>
+          <span>02</span>
+          <div>
+            <small>RESOLVE</small>
+            <h3>The model removes ambiguity.</h3>
+            <p>Engineers see the same evidence at the same moment, without reconciling disconnected versions of the truth.</p>
+          </div>
+        </article>
+        <article>
+          <span>03</span>
+          <div>
+            <small>ACT</small>
+            <h3>The decision arrives before the corner.</h3>
+            <p>Responsive access converts analysis into setup, strategy and intervention while the opportunity still exists.</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="hdx" id="hdx" aria-labelledby="hdx-title">
+      <div class="hdx__field" aria-hidden="true">
+        <div class="hdx__beam hdx__beam--a"></div>
+        <div class="hdx__beam hdx__beam--b"></div>
+        <div class="hdx__node hdx__node--garage">GARAGE</div>
+        <div class="hdx__node hdx__node--factory">FACTORY</div>
+        <div class="hdx__node hdx__node--specialist">SPECIALIST</div>
+      </div>
+
+      <div class="hdx__content">
+        <p class="hdx__index">02 / THE TRANSMISSION LAYER</p>
+        <h2 id="hdx-title">MOVE THE<br>EXPERIENCE.<br><span>KEEP THE DATA.</span></h2>
+        <p class="hdx__intro">
+          Citrix HDX is the layer beneath the briefing—designed to deliver responsive, high-fidelity application experiences while applications and sensitive datasets remain in the governed environment.
+        </p>
+
+        <div class="hdx__principles">
+          <article>
+            <span>01</span>
+            <h3>Adaptive transport</h3>
+            <p>EDT is preferred with TCP fallback when required, supporting continuity as network conditions change.</p>
+          </article>
+          <article>
+            <span>02</span>
+            <h3>Graphics intelligence</h3>
+            <p>Interactive regions stay responsive, then visual detail progressively refines when the screen settles.</p>
+          </article>
+          <article>
+            <span>03</span>
+            <h3>Central control</h3>
+            <p>The application experience moves to the engineer. The controlled data environment does not.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="closing" aria-labelledby="closing-title">
+      <p>RACE INTELLIGENCE / FINAL BRIEF</p>
+      <h2 id="closing-title">WHEN THE LIGHTS COME ON,<br><span>THE ANSWER IS ALREADY THERE.</span></h2>
+      <a href="#briefing">RETURN TO 06:00 BRIEFING <span>↑</span></a>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>FORMULA 1 DATA PERFORMANCE / CONCEPT EXPERIENCE</span>
+    <span>SESSION 03 · RACE MORNING · SYSTEM LINKED</span>
+  </footer>
+
+  <dialog class="film" data-film aria-labelledby="film-title">
+    <button class="film__close" type="button" data-close-film aria-label="Close film">×</button>
+    <div class="film__visual" aria-hidden="true">
+      <div class="film__rings"></div>
+      <div class="film__sweep"></div>
+    </div>
+    <div class="film__copy">
+      <p>RACE INTELLIGENCE FILM / 00:34</p>
+      <h2 id="film-title">THE LAP BEGINS BEFORE THE CAR MOVES.</h2>
+      <span>Telemetry. Simulation. Human judgment. One controlled environment.</span>
+    </div>
+  </dialog>
+
+  <script src="ui.js" defer></script>
+  <script type="module" src="scene.js"></script>
+</body>
+</html>
