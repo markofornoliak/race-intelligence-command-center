@@ -1,0 +1,200 @@
+scale = [1, 1, 1],
+explode = [0, 0, 0],
+explodeFactor = 1,
+edges = true,
+edgeColor = 0x6ecfff,
+edgeOpacity = 0.22
+} = options;
+const group = new THREE.Group();
+group.position.set(...position);
+group.rotation.set(...rotation);
+group.scale.set(...scale);
+parent.add(group);
+const mesh = new THREE.Mesh(geometry, material);
+mesh.castShadow = false;
+mesh.receiveShadow = false;
+group.add(mesh);
+if (edges) {
+const edgeMaterial = new THREE.LineBasicMaterial({
+color: edgeColor,
+transparent: true,
+opacity: edgeOpacity,
+depthWrite: false,
+blending: THREE.AdditiveBlending
+});
+edgeMaterial.userData.baseOpacity = edgeOpacity;
+const edge = new THREE.LineSegments(new THREE.EdgesGeometry(geometry, 26), edgeMaterial);
+edge.renderOrder = 6;
+group.add(edge);
+}
+if (explode.some((value) => value !== 0)) trackExploded(group, explode, explodeFactor);
+return group;
+};
+const loftGeometryRi06 = (stations, radialSegments = 16) => {
+const vertices = [];
+const indices = [];
+stations.forEach((station) => {
+for (let segment = 0; segment < radialSegments; segment += 1) {
+const angle = (segment / radialSegments) * Math.PI * 2;
+const cosine = Math.cos(angle);
+const sine = Math.sin(angle);
+const lowerBias = sine < 0 ? (station.lowerBias ?? 1) : 1;
+vertices.push(
+station.x,
+station.y + sine * station.height * lowerBias,
+station.z + cosine * station.width
+);
+}
+});
+for (let station = 0; station < stations.length - 1; station += 1) {
+for (let segment = 0; segment < radialSegments; segment += 1) {
+const next = (segment + 1) % radialSegments;
+const a = station * radialSegments + segment;
+const b = station * radialSegments + next;
+const c = (station + 1) * radialSegments + segment;
+const d = (station + 1) * radialSegments + next;
+indices.push(a, c, b, b, c, d);
+}
+}
+const geometry = new THREE.BufferGeometry();
+geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+geometry.setIndex(indices);
+geometry.computeVertexNormals();
+return geometry;
+};
+const airfoilGeometry = (length, span, thickness, camber = 0.08, bevel = 0.025) => {
+const shape = new THREE.Shape();
+shape.moveTo(-length / 2, 0);
+shape.bezierCurveTo(-length * 0.16, thickness * 0.72 + camber, length * 0.25, thickness * 0.45 + camber, length / 2, 0);
+shape.bezierCurveTo(length * 0.22, -thickness * 0.34, -length * 0.25, -thickness * 0.28, -length / 2, 0);
+const geometry = new THREE.ExtrudeGeometry(shape, {
+depth: span,
+bevelEnabled: true,
+bevelSegments: 2,
+steps: 1,
+bevelSize: bevel,
+bevelThickness: bevel
+});
+geometry.translate(0, 0, -span / 2);
+geometry.computeVertexNormals();
+return geometry;
+};
+const monocoque = addMesh(loftGeometryRi06([
+{ x: -3.65, y: -0.02, z: 0, width: 0.23, height: 0.22, lowerBias: 0.7 },
+{ x: -2.65, y: -0.03, z: 0, width: 0.48, height: 0.38, lowerBias: 0.72 },
+{ x: -1.42, y: 0.08, z: 0, width: 0.72, height: 0.56, lowerBias: 0.78 },
+{ x: -0.15, y: 0.2, z: 0, width: 0.86, height: 0.68, lowerBias: 0.72 },
+{ x: 1.15, y: 0.14, z: 0, width: 0.92, height: 0.62, lowerBias: 0.72 },
+{ x: 2.25, y: 0.04, z: 0, width: 0.72, height: 0.48, lowerBias: 0.76 },
+{ x: 3.48, y: -0.05, z: 0, width: 0.4, height: 0.3, lowerBias: 0.82 }
+], 20), carbon, {
+position: [0, 0.02, 0],
+explode: [0, 0.65, 0],
+edgeOpacity: 0.32
+});
+addMesh(loftGeometryRi06([
+{ x: -5.18, y: -0.16, z: 0, width: 0.1, height: 0.08 },
+{ x: -4.55, y: -0.08, z: 0, width: 0.2, height: 0.14 },
+{ x: -3.7, y: 0.02, z: 0, width: 0.29, height: 0.22 },
+{ x: -3.0, y: 0.04, z: 0, width: 0.42, height: 0.28 }
+], 14), paint, {
+edgeOpacity: 0.42,
+explode: [-0.9, 0.1, 0]
+});
+const cockpitShell = addMesh(loftGeometryRi06([
+{ x: -0.85, y: 0.6, z: 0, width: 0.62, height: 0.35 },
+{ x: -0.05, y: 0.77, z: 0, width: 0.72, height: 0.5 },
+{ x: 0.72, y: 0.74, z: 0, width: 0.62, height: 0.46 },
+{ x: 1.22, y: 0.56, z: 0, width: 0.45, height: 0.29 }
+], 18), paintDark, {
+explode: [0, 0.95, 0],
+edgeOpacity: 0.3
+});
+addMesh(new THREE.SphereGeometry(0.37, 32, 20, 0, Math.PI * 2, 0, Math.PI * 0.72), glass, {
+position: [-0.12, 0.96, 0],
+rotation: [0, 0, -0.1],
+scale: [1.08, 1, 0.88],
+explode: [0, 1.25, 0],
+edges: false
+});
+const helmet = addMesh(new THREE.SphereGeometry(0.31, 28, 18), accent, {
+position: [0.04, 0.94, 0],
+scale: [1, 1.06, 0.93],
+explode: [0, 1.55, 0],
+edgeOpacity: 0.14
+});
+addMesh(new THREE.BoxGeometry(0.33, 0.075, 0.62), glass, {
+parent: helmet,
+position: [-0.08, 0.03, 0],
+rotation: [0, 0, -0.09],
+edges: false
+});
+const sidepodStations = (side) => [
+{ x: -0.3, y: 0.18, z: side * 0.94, width: 0.22, height: 0.3 },
+{ x: 0.55, y: 0.18, z: side * 1.15, width: 0.38, height: 0.5, lowerBias: 0.48 },
+{ x: 1.55, y: 0.1, z: side * 1.2, width: 0.36, height: 0.43, lowerBias: 0.42 },
+{ x: 2.58, y: -0.03, z: side * 0.9, width: 0.24, height: 0.3, lowerBias: 0.52 },
+{ x: 3.05, y: -0.12, z: side * 0.62, width: 0.12, height: 0.2, lowerBias: 0.65 }
+];
+[-1, 1].forEach((side) => {
+addMesh(loftGeometryRi06(sidepodStations(side), 16), paint, {
+explode: [0.05, 0.3, side * 1.45],
+edgeOpacity: 0.34
+});
+const intake = addMesh(new THREE.TorusGeometry(0.31, 0.075, 10, 32, Math.PI * 1.48), carbonSoft, {
+position: [-0.28, 0.35, side * 1.11],
+rotation: [Math.PI / 2, 0, side > 0 ? Math.PI * 0.24 : -Math.PI * 0.24],
+scale: [1.25, 1, 0.72],
+explode: [0, 0.35, side * 1.55],
+edgeOpacity: 0.28
+});
+intake.children[0].material.side = THREE.DoubleSide;
+addMesh(airfoilGeometry(0.88, 0.36, 0.08, 0.025, 0.012), carbon, {
+parent: ri06Aero,
+position: [-0.78, 0.03, side * 1.32],
+rotation: [0.02, side * 0.12, side * -0.04],
+explode: [0, 0.3, side * 1.75],
+edgeOpacity: 0.34
+});
+addMesh(new THREE.BoxGeometry(2.7, 0.075, 0.16, 18, 1, 2), carbonSoft, {
+parent: ri06Aero,
+position: [1.12, -0.61, side * 1.48],
+rotation: [0, side * -0.025, 0],
+explode: [0, -0.35, side * 1.85],
+edgeOpacity: 0.26
+});
+[0, 1, 2].forEach((index) => {
+addMesh(new THREE.BoxGeometry(0.08, 0.28 + index * 0.05, 0.72 - index * 0.08), carbonSoft, {
+parent: ri06Aero,
+position: [2.58 + index * 0.22, -0.67 + index * 0.04, side * (0.62 + index * 0.13)],
+rotation: [0, side * -0.08, side * 0.06],
+explode: [0.25, -0.5, side * 1.6],
+edgeOpacity: 0.2
+});
+});
+addMesh(new THREE.BoxGeometry(0.28, 0.12, 0.46), carbon, {
+position: [-0.45, 0.86, side * 0.78],
+rotation: [0, side * 0.16, 0],
+explode: [0, 1.2, side * 1.2],
+edgeOpacity: 0.35
+});
+});
+addMesh(loftGeometryRi06([
+{ x: 0.7, y: 0.72, z: 0, width: 0.54, height: 0.32 },
+{ x: 1.48, y: 1.02, z: 0, width: 0.48, height: 0.48 },
+{ x: 2.28, y: 0.92, z: 0, width: 0.38, height: 0.46 },
+{ x: 3.15, y: 0.56, z: 0, width: 0.24, height: 0.3 },
+{ x: 4.05, y: 0.28, z: 0, width: 0.12, height: 0.14 }
+], 16), carbon, {
+explode: [0.7, 0.8, 0],
+edgeOpacity: 0.3
+});
+addMesh(new THREE.CapsuleGeometry(0.28, 0.58, 6, 20), carbonSoft, {
+position: [1.08, 1.26, 0],
+rotation: [0, 0, Math.PI / 2],
+scale: [1, 0.74, 1.25],
+explode: [0.2, 1.6, 0],
+edgeOpacity: 0.3
+});
+addMesh(new THREE.BoxGeometry(1.55, 0.055, 0.11), accent, {
+position: [-2.02, 0.24, 0],

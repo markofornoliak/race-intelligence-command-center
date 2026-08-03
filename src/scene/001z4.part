@@ -1,0 +1,191 @@
+position: [4.68, 0.18, 0],
+explode: [1.2, 0.3, 0],
+edges: false
+});
+const dataNodeMaterial = new THREE.MeshPhysicalMaterial({
+color: 0x2ad8ff,
+emissive: 0x0a5c75,
+emissiveIntensity: 1.4,
+metalness: 0.1,
+roughness: 0.18,
+transparent: true,
+opacity: 0.78,
+depthWrite: false
+});
+dataNodeMaterial.userData.baseOpacity = 0.78;
+[
+[-3.4, 0.04, 0],
+[-1.2, 0.42, 0],
+[0.1, 0.82, 0],
+[1.58, 0.34, -0.46],
+[1.58, 0.34, 0.46],
+[3.18, -0.1, 0]
+].forEach((position, index) => {
+const node = new THREE.Mesh(new THREE.OctahedronGeometry(index === 2 ? 0.13 : 0.085, 1), dataNodeMaterial.clone());
+node.position.set(...position);
+node.userData.phase = index * 0.8;
+ri06Signal.add(node);
+});
+const telemetryCurves = [
+[
+new THREE.Vector3(-4.7, -0.05, 0),
+new THREE.Vector3(-2.5, 0.18, 0),
+new THREE.Vector3(-0.2, 0.75, 0),
+new THREE.Vector3(2.1, 0.28, 0),
+new THREE.Vector3(4.4, 0.42, 0)
+],
+[
+new THREE.Vector3(-2.92, -0.56, -1.75),
+new THREE.Vector3(-1.3, 0.18, -0.62),
+new THREE.Vector3(0.1, 0.78, 0),
+new THREE.Vector3(1.8, 0.12, 0.62),
+new THREE.Vector3(3.18, -0.56, 1.84)
+],
+[
+new THREE.Vector3(-2.92, -0.56, 1.75),
+new THREE.Vector3(-1.3, 0.18, 0.62),
+new THREE.Vector3(0.1, 0.78, 0),
+new THREE.Vector3(1.8, 0.12, -0.62),
+new THREE.Vector3(3.18, -0.56, -1.84)
+]
+];
+const ri06DataParticles = [];
+telemetryCurves.forEach((points, curveIndex) => {
+const curve = new THREE.CatmullRomCurve3(points);
+const tube = new THREE.Mesh(
+new THREE.TubeGeometry(curve, 90, 0.018, 6, false),
+luminous.clone()
+);
+tube.material.opacity = 0.2;
+tube.material.userData.baseOpacity = 0.2;
+ri06Signal.add(tube);
+for (let index = 0; index < 8; index += 1) {
+const particle = new THREE.Mesh(new THREE.SphereGeometry(0.038, 10, 8), luminous.clone());
+particle.userData.curve = curve;
+particle.userData.offset = index / 8 + curveIndex * 0.11;
+particle.userData.speed = 0.055 + curveIndex * 0.009;
+ri06Signal.add(particle);
+ri06DataParticles.push(particle);
+}
+});
+const underGlow = new THREE.Mesh(
+new THREE.PlaneGeometry(7.1, 2.65),
+new THREE.MeshBasicMaterial({
+color: 0x1ab9f0,
+transparent: true,
+opacity: 0.11,
+blending: THREE.AdditiveBlending,
+depthWrite: false,
+side: THREE.DoubleSide
+})
+);
+underGlow.rotation.x = -Math.PI / 2;
+underGlow.position.set(0.4, -0.84, 0);
+ri06Root.add(underGlow);
+const groundShadow = new THREE.Mesh(
+new THREE.PlaneGeometry(13.5, 6.5),
+new THREE.MeshBasicMaterial({
+color: 0x000000,
+transparent: true,
+opacity: 0.42,
+depthWrite: false,
+side: THREE.DoubleSide
+})
+);
+groundShadow.rotation.x = -Math.PI / 2;
+groundShadow.position.set(0.2, -1.18, 0);
+world.add(groundShadow);
+const ri06Key = new THREE.DirectionalLight(0xe7f9ff, 1.55);
+ri06Key.position.set(-8, 8, 5);
+scene.add(ri06Key);
+const ri06BlueRim = new THREE.PointLight(0x38c8ff, 4.2, 11, 2);
+ri06BlueRim.position.set(-1.1, 2.7, -4.2);
+scene.add(ri06BlueRim);
+const ri06RedRim = new THREE.PointLight(0xff2035, 4.6, 10, 2);
+ri06RedRim.position.set(4.2, 1.0, 3.7);
+scene.add(ri06RedRim);
+const ri06CockpitGlow = new THREE.PointLight(0x76e8ff, 3.6, 7, 2);
+ri06CockpitGlow.position.set(-0.05, 1.5, 0);
+scene.add(ri06CockpitGlow);
+const controlsHost = document.querySelector('.scene-controls');
+const viewDock = document.createElement('div');
+viewDock.className = 'scene-view-dock';
+viewDock.setAttribute('aria-label', 'Digital twin camera controls');
+viewDock.innerHTML = `
+<span>CAMERA</span>
+<button type="button" data-ri06-view="hero" class="is-active">HERO</button>
+<button type="button" data-ri06-view="front">FRONT</button>
+<button type="button" data-ri06-view="top">TOP</button>
+<button type="button" data-ri06-view="rear">REAR</button>
+<button type="button" data-ri06-explode aria-pressed="false">EXPLODE</button>
+`;
+controlsHost?.insertAdjacentElement('afterend', viewDock);
+let ri06Exploded = 0;
+let ri06ExplodedTarget = 0;
+let ri06FovTarget = 29;
+let ri06DsrTarget = 0;
+let ri06LastTime = performance.now();
+const presets = {
+hero: { x: -0.08, y: -0.52, fov: 29 },
+front: { x: -0.03, y: -1.58, fov: 27 },
+top: { x: -1.12, y: -0.18, fov: 33 },
+rear: { x: -0.03, y: 2.56, fov: 28 }
+};
+viewDock.querySelectorAll('[data-ri06-view]').forEach((button) => {
+button.addEventListener('click', () => {
+const preset = presets[button.dataset.ri06View];
+if (!preset) return;
+viewDock.querySelectorAll('[data-ri06-view]').forEach((item) => item.classList.toggle('is-active', item === button));
+viewState.targetRotationX = preset.x;
+viewState.targetRotationY = preset.y;
+ri06FovTarget = preset.fov;
+});
+});
+const explodeButton = viewDock.querySelector('[data-ri06-explode]');
+explodeButton?.addEventListener('click', () => {
+ri06ExplodedTarget = ri06ExplodedTarget > 0.5 ? 0 : 1;
+explodeButton.classList.toggle('is-active', ri06ExplodedTarget > 0.5);
+explodeButton.setAttribute('aria-pressed', String(ri06ExplodedTarget > 0.5));
+});
+modeButtons.forEach((button) => {
+button.addEventListener('click', () => {
+ri06DsrTarget = button.dataset.mode === 'aero' ? 1 : 0;
+});
+});
+const animateRi06 = (time) => {
+requestAnimationFrame(animateRi06);
+const delta = Math.min((time - ri06LastTime) / 1000, 0.05);
+ri06LastTime = time;
+const interpolation = reducedMotion ? 1 : 1 - Math.pow(0.001, delta);
+ri06Exploded = THREE.MathUtils.lerp(ri06Exploded, ri06ExplodedTarget, interpolation * 0.72);
+camera.fov = THREE.MathUtils.lerp(camera.fov, ri06FovTarget, interpolation * 0.55);
+camera.updateProjectionMatrix();
+explodedParts.forEach((part) => {
+const home = part.userData.ri06Home;
+const vector = part.userData.ri06Explode;
+if (!home || !vector) return;
+part.position.copy(home).addScaledVector(vector, ri06Exploded);
+});
+const drsAngle = THREE.MathUtils.lerp(drsFlap.rotation.z, -0.1 - ri06DsrTarget * 0.3, interpolation * 0.6);
+drsFlap.rotation.z = drsAngle;
+if (!reducedMotion) {
+ri06Wheels.forEach((wheel, index) => {
+wheel.rotation.z += delta * (index < 2 ? 0.12 : 0.095);
+});
+ri06Signal.children.forEach((child, index) => {
+if (typeof child.userData.phase === 'number') {
+const pulse = 0.84 + Math.sin(time * 0.003 + child.userData.phase) * 0.18;
+child.scale.setScalar(pulse);
+}
+});
+ri06DataParticles.forEach((particle) => {
+const t = (time * 0.001 * particle.userData.speed + particle.userData.offset) % 1;
+particle.position.copy(particle.userData.curve.getPointAt(t));
+particle.scale.setScalar(0.75 + Math.sin(time * 0.006 + t * 12) * 0.22);
+});
+underGlow.material.opacity = 0.08 + Math.sin(time * 0.0018) * 0.025;
+ri06RedRim.intensity = 4.2 + Math.sin(time * 0.0014) * 0.65;
+}
+};
+requestAnimationFrame(animateRi06);
+}

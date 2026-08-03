@@ -1,0 +1,200 @@
+rotation: [0, 0, 0.03],
+explode: [-0.4, 0.4, 0],
+edges: false
+});
+addMesh(new THREE.BoxGeometry(1.78, 0.05, 0.09), luminous, {
+position: [1.58, 0.52, 0],
+rotation: [0, 0, -0.06],
+explode: [0.5, 0.55, 0],
+edges: false
+});
+const haloPoints = [
+new THREE.Vector3(-0.62, 0.69, -0.56),
+new THREE.Vector3(-0.18, 1.34, -0.66),
+new THREE.Vector3(0.46, 1.52, 0),
+new THREE.Vector3(-0.18, 1.34, 0.66),
+new THREE.Vector3(-0.62, 0.69, 0.56)
+];
+const halo = addMesh(
+new THREE.TubeGeometry(new THREE.CatmullRomCurve3(haloPoints), 64, 0.058, 10, false),
+titanium,
+{ explode: [0, 1.35, 0], edgeOpacity: 0.26 }
+);
+addMesh(new THREE.CylinderGeometry(0.055, 0.055, 0.92, 10), titanium, {
+parent: halo,
+position: [0.46, -0.44, 0],
+rotation: [0, 0, -0.13],
+edges: false
+});
+const steering = addMesh(new THREE.BoxGeometry(0.09, 0.42, 0.58), carbonSoft, {
+position: [-0.62, 0.82, 0],
+rotation: [0, 0, -0.15],
+explode: [-0.55, 1.15, 0],
+edgeOpacity: 0.36
+});
+addMesh(new THREE.BoxGeometry(0.02, 0.19, 0.34), glass, {
+parent: steering,
+position: [-0.052, 0, 0],
+edges: false
+});
+const frontWing = new THREE.Group();
+frontWing.position.set(-5.05, -0.33, 0);
+ri06Aero.add(frontWing);
+trackExploded(frontWing, [-1.45, -0.15, 0]);
+[
+{ x: 0, y: 0, length: 1.28, span: 3.75, thickness: 0.13, camber: 0.07, rotation: -0.035 },
+{ x: 0.24, y: 0.18, length: 1.0, span: 3.46, thickness: 0.1, camber: 0.08, rotation: -0.095 },
+{ x: 0.43, y: 0.34, length: 0.78, span: 3.1, thickness: 0.085, camber: 0.09, rotation: -0.16 },
+{ x: 0.57, y: 0.49, length: 0.58, span: 2.68, thickness: 0.075, camber: 0.1, rotation: -0.22 }
+].forEach((element, index) => {
+addMesh(airfoilGeometry(element.length, element.span, element.thickness, element.camber), index === 0 ? carbon : paintDark, {
+parent: frontWing,
+position: [element.x, element.y, 0],
+rotation: [0, 0, element.rotation],
+edgeOpacity: 0.32
+});
+});
+[-1, 1].forEach((side) => {
+addMesh(new THREE.BoxGeometry(1.22, 0.78, 0.055, 8, 6, 1), carbon, {
+parent: frontWing,
+position: [0.18, 0.2, side * 1.88],
+rotation: [0, side * 0.04, side * 0.06],
+edgeOpacity: 0.38
+});
+});
+const rearWing = new THREE.Group();
+rearWing.position.set(4.62, 1.03, 0);
+ri06Aero.add(rearWing);
+trackExploded(rearWing, [1.25, 0.85, 0]);
+const mainPlane = addMesh(airfoilGeometry(0.94, 2.9, 0.15, 0.08), carbon, {
+parent: rearWing,
+position: [0, 0, 0],
+rotation: [0, 0, 0.04],
+edgeOpacity: 0.38
+});
+const drsFlap = addMesh(airfoilGeometry(0.72, 2.72, 0.11, 0.09), paintDark, {
+parent: rearWing,
+position: [-0.12, 0.31, 0],
+rotation: [0, 0, -0.1],
+edgeOpacity: 0.42
+});
+[-1, 1].forEach((side) => {
+addMesh(new THREE.BoxGeometry(0.72, 1.15, 0.065, 8, 8, 1), carbon, {
+parent: rearWing,
+position: [0.02, 0.04, side * 1.47],
+rotation: [0, 0, side * 0.015],
+edgeOpacity: 0.32
+});
+});
+addMesh(new THREE.CylinderGeometry(0.05, 0.05, 0.62, 10), titanium, {
+parent: rearWing,
+position: [-0.08, -0.43, 0],
+edges: false
+});
+addMesh(airfoilGeometry(0.62, 2.1, 0.08, 0.045), carbonSoft, {
+parent: ri06Aero,
+position: [4.18, 0.34, 0],
+rotation: [0, 0, -0.08],
+explode: [1, 0.2, 0],
+edgeOpacity: 0.26
+});
+const floor = addMesh(new THREE.BoxGeometry(7.8, 0.09, 3.16, 28, 1, 14), carbonSoft, {
+parent: ri06Aero,
+position: [0.46, -0.76, 0],
+explode: [0, -1.1, 0],
+edgeOpacity: 0.2
+});
+addMesh(new THREE.PlaneGeometry(5.8, 2.28, 18, 8), glass, {
+parent: floor,
+position: [0.25, -0.052, 0],
+rotation: [-Math.PI / 2, 0, 0],
+edges: false
+});
+const diffuser = new THREE.Group();
+diffuser.position.set(3.75, -0.55, 0);
+ri06Aero.add(diffuser);
+trackExploded(diffuser, [0.9, -0.75, 0]);
+[-1, -0.5, 0, 0.5, 1].forEach((lane) => {
+addMesh(new THREE.BoxGeometry(1.6, 0.08, 0.06), carbon, {
+parent: diffuser,
+position: [0, lane === 0 ? 0.08 : 0, lane * 1.18],
+rotation: [0, lane * -0.035, 0.28],
+scale: [1, 1, 1.6],
+edgeOpacity: 0.26
+});
+});
+const wheelAssembly = (x, z, radius, front, side) => {
+const assembly = new THREE.Group();
+assembly.position.set(x, -0.56, z);
+ri06Root.add(assembly);
+trackExploded(assembly, [front ? -0.35 : 0.45, 0.1, side * 1.7]);
+const tire = new THREE.Mesh(new THREE.TorusGeometry(radius * 0.68, radius * 0.29, 22, 72), tireMaterialRi06);
+assembly.add(tire);
+const sidewall = new THREE.Mesh(new THREE.CylinderGeometry(radius * 0.66, radius * 0.66, front ? 0.5 : 0.58, 64, 1, true), tireMaterialRi06.clone());
+sidewall.rotation.x = Math.PI / 2;
+assembly.add(sidewall);
+const rim = new THREE.Mesh(new THREE.CylinderGeometry(radius * 0.47, radius * 0.47, front ? 0.52 : 0.6, 40), metal);
+rim.rotation.x = Math.PI / 2;
+assembly.add(rim);
+const rimVoid = new THREE.Mesh(new THREE.CylinderGeometry(radius * 0.37, radius * 0.37, front ? 0.55 : 0.63, 40), carbonSoft);
+rimVoid.rotation.x = Math.PI / 2;
+assembly.add(rimVoid);
+const brake = new THREE.Mesh(new THREE.CylinderGeometry(radius * 0.31, radius * 0.31, 0.075, 48), brakeMaterial);
+brake.rotation.x = Math.PI / 2;
+brake.position.z = side * -0.055;
+assembly.add(brake);
+const caliper = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.42, 0.11), accent);
+caliper.position.set(0.2, 0, side * -0.11);
+assembly.add(caliper);
+const hub = new THREE.Mesh(new THREE.CylinderGeometry(radius * 0.095, radius * 0.095, front ? 0.64 : 0.72, 18), titanium);
+hub.rotation.x = Math.PI / 2;
+assembly.add(hub);
+for (let index = 0; index < 12; index += 1) {
+const angle = (index / 12) * Math.PI * 2;
+const spoke = new THREE.Mesh(new THREE.BoxGeometry(radius * 0.39, 0.032, 0.035), metal);
+spoke.position.set(Math.cos(angle) * radius * 0.19, Math.sin(angle) * radius * 0.19, side * 0.012);
+spoke.rotation.z = angle;
+assembly.add(spoke);
+}
+const tyreRing = new THREE.Mesh(new THREE.TorusGeometry(radius * 0.75, 0.012, 8, 80), front ? luminous.clone() : redLuminous.clone());
+tyreRing.position.z = side * (front ? 0.27 : 0.31);
+tyreRing.material.opacity = front ? 0.48 : 0.32;
+tyreRing.material.userData.baseOpacity = tyreRing.material.opacity;
+assembly.add(tyreRing);
+register(assembly, 'systems');
+return assembly;
+};
+const ri06Wheels = [
+wheelAssembly(-2.92, -1.75, 0.81, true, -1),
+wheelAssembly(-2.92, 1.75, 0.81, true, 1),
+wheelAssembly(3.18, -1.84, 0.9, false, -1),
+wheelAssembly(3.18, 1.84, 0.9, false, 1)
+];
+[-1, 1].forEach((side) => {
+const suspensionMaterial = side > 0 ? titanium : metal;
+[
+[[-2.02, 0.06, side * 0.68], [-2.92, -0.56, side * 1.75]],
+[[-2.14, -0.38, side * 0.72], [-2.92, -0.56, side * 1.75]],
+[[-1.82, 0.34, side * 0.62], [-2.92, -0.56, side * 1.75]],
+[[2.42, 0.18, side * 0.64], [3.18, -0.56, side * 1.84]],
+[[2.31, -0.42, side * 0.7], [3.18, -0.56, side * 1.84]],
+[[2.72, 0.42, side * 0.56], [3.18, -0.56, side * 1.84]]
+].forEach(([startValue, endValue]) => {
+const start = new THREE.Vector3(...startValue);
+const end = new THREE.Vector3(...endValue);
+const direction = end.clone().sub(start);
+const rod = addMesh(new THREE.CylinderGeometry(0.026, 0.026, direction.length(), 10), suspensionMaterial, {
+position: start.clone().add(end).multiplyScalar(0.5).toArray(),
+explode: [0, 0.2, side * 0.9],
+edges: false
+});
+rod.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction.normalize());
+});
+});
+addMesh(new THREE.CylinderGeometry(0.085, 0.07, 0.34, 16), titanium, {
+position: [4.05, 0.28, 0],
+rotation: [0, 0, Math.PI / 2],
+explode: [0.9, 0.3, 0],
+edgeOpacity: 0.2
+});
+addMesh(new THREE.BoxGeometry(0.16, 0.15, 0.22), redLuminous, {
