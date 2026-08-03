@@ -28,8 +28,12 @@ if (!html.includes('aria-label')) throw new Error('Accessible labels are incompl
 if (!css.includes('@media (max-width:760px)')) throw new Error('Mobile layout breakpoint is missing.');
 if (!css.includes('prefers-reduced-motion')) throw new Error('Reduced-motion support is missing.');
 
+const threeImportPattern = /import\s*\*\s*as\s+THREE\s*from\s*['"]three['"]/;
+if (!threeImportPattern.test(scene)) {
+  throw new Error('3D scene capability missing: Three.js namespace import');
+}
+
 const sceneChecks = [
-  "import * as THREE from 'three'",
   'WebGLRenderer',
   'CapsuleGeometry',
   'TubeGeometry',
