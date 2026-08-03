@@ -1,0 +1,100 @@
+});
+titanium.userData.baseOpacity = 0.94;
+const glass = new THREE.MeshPhysicalMaterial({
+color: 0x61d9ff,
+transmission: 0.35,
+transparent: true,
+opacity: 0.34,
+roughness: 0.08,
+metalness: 0.08,
+thickness: 0.22,
+clearcoat: 1,
+emissive: 0x063344,
+emissiveIntensity: 0.75,
+depthWrite: false
+});
+glass.userData.baseOpacity = 0.34;
+const tireMaterialRi06 = new THREE.MeshStandardMaterial({
+color: 0x030405,
+roughness: 0.84,
+metalness: 0.02,
+transparent: true,
+opacity: 0.99
+});
+tireMaterialRi06.userData.baseOpacity = 0.99;
+const brakeMaterial = new THREE.MeshStandardMaterial({
+color: 0x46505a,
+metalness: 0.9,
+roughness: 0.4,
+transparent: true,
+opacity: 0.95
+});
+brakeMaterial.userData.baseOpacity = 0.95;
+const luminous = new THREE.MeshBasicMaterial({
+color: 0x8ce9ff,
+transparent: true,
+opacity: 0.88,
+blending: THREE.AdditiveBlending,
+depthWrite: false
+});
+luminous.userData.baseOpacity = 0.88;
+const redLuminous = new THREE.MeshBasicMaterial({
+color: 0xff2437,
+transparent: true,
+opacity: 0.95,
+blending: THREE.AdditiveBlending,
+depthWrite: false
+});
+redLuminous.userData.baseOpacity = 0.95;
+const studio = new THREE.Scene();
+studio.background = new THREE.Color(0x02070c);
+const studioFloor = new THREE.Mesh(
+new THREE.PlaneGeometry(40, 40),
+new THREE.MeshBasicMaterial({ color: 0x0b1824, side: THREE.DoubleSide })
+);
+studioFloor.rotation.x = -Math.PI / 2;
+studioFloor.position.y = -4;
+studio.add(studioFloor);
+const studioPanels = [
+[-7, 2, 1, 0xe4f7ff],
+[7, 1, -3, 0x0a5f99],
+[1, 6, 4, 0x75dbff],
+[3, 0, -7, 0xff2638]
+];
+studioPanels.forEach(([x, y, z, color]) => {
+const panel = new THREE.Mesh(
+new THREE.PlaneGeometry(6, 6),
+new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide })
+);
+panel.position.set(x, y, z);
+panel.lookAt(0, 0, 0);
+studio.add(panel);
+});
+const pmrem = new THREE.PMREMGenerator(renderer);
+const environment = pmrem.fromScene(studio, 0.05).texture;
+scene.environment = environment;
+pmrem.dispose();
+const ri06Root = new THREE.Group();
+ri06Root.name = 'RI06_DIGITAL_TWIN';
+car.add(ri06Root);
+register(ri06Root, 'systems');
+const ri06Aero = new THREE.Group();
+ri06Aero.name = 'RI06_AERO_PACKAGE';
+car.add(ri06Aero);
+register(ri06Aero, 'aero');
+const ri06Signal = new THREE.Group();
+ri06Signal.name = 'RI06_SIGNAL_NETWORK';
+car.add(ri06Signal);
+register(ri06Signal, 'signal');
+const explodedParts = [];
+const trackExploded = (object, vector, factor = 1) => {
+object.userData.ri06Home = object.position.clone();
+object.userData.ri06Explode = new THREE.Vector3(...vector).multiplyScalar(factor);
+explodedParts.push(object);
+return object;
+};
+const addMesh = (geometry, material, options = {}) => {
+const {
+parent = ri06Root,
+position = [0, 0, 0],
+rotation = [0, 0, 0],
