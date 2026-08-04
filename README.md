@@ -13,6 +13,12 @@ A cinematic Formula 1 data-performance microsite presented as a confidential rac
 - reduced-motion support and responsive layouts
 - dependency-free production build
 
+## RI-10X roadmap
+
+The next major release is governed by the [RI-10X Master Build Brief](docs/RI10X_MASTER_BUILD_BRIEF.md). It defines the target product architecture, section-by-section experience, file ownership, digital-twin asset pipeline, deterministic simulation model, performance budgets, testing gates and phased implementation sequence.
+
+Implementation must begin with the foundation migration defined in Phase 0 and Phase 1 of the brief. New RI-10X features must not be added to the legacy `.part` architecture.
+
 ## Technology
 
 - semantic HTML
