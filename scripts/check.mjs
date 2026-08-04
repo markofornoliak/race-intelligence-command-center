@@ -1,101 +1,79 @@
-import { access, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { access, mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { execFile } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
+import { SCENARIOS, computeStrategy, defaultScenarioInputs, generateTelemetry } from '../src/ri10x/core.mjs';
 
 const execFileAsync = promisify(execFile);
+const sourceRoot = 'src/ri10x';
+const files = ['index.html', 'styles.css', 'app.js', 'scene.js', 'core.mjs'];
+for (const file of files) await access(`${sourceRoot}/${file}`);
 
-const assemble = async (directory) => {
-  const files = (await readdir(directory)).filter((file) => file.endsWith('.part')).sort();
-  if (!files.length) throw new Error(`No source parts found in ${directory}.`);
-  return (await Promise.all(files.map((file) => readFile(join(directory, file), 'utf8')))).join('');
-};
+const html = await readFile(`${sourceRoot}/index.html`, 'utf8');
+const css = await readFile(`${sourceRoot}/styles.css`, 'utf8');
+const app = await readFile(`${sourceRoot}/app.js`, 'utf8');
+const scene = await readFile(`${sourceRoot}/scene.js`, 'utf8');
 
-const html = await assemble('src/index');
-const css = await assemble('src/styles');
-const scene = await assemble('src/scene');
-const ui = await assemble('src/ui');
-
-const copyChecks = [
-  'DRIVING PERFORMANCE WITH',
-  'EFFICIENT',
-  'DATA ACCESS',
-  'PLAY BRIEFING',
-  'EXPLORE CITRIX HDX',
-  'Speed is an information problem already solved.',
-  'ONE LAP.',
-  'MOVE THE'
-];
-for (const copy of copyChecks) {
-  if (!html.includes(copy)) throw new Error(`Required campaign copy missing: ${copy}`);
-}
-
-if ((html.match(/<h1/g) || []).length !== 1) throw new Error('The page must contain exactly one h1.');
-if (!html.includes('type="importmap"')) throw new Error('Three.js import map is missing.');
-if (!html.includes('<dialog')) throw new Error('Briefing dialog is missing.');
-if (!html.includes('aria-label')) throw new Error('Accessible labels are incomplete.');
-if (!html.includes('data-menu-toggle')) throw new Error('Responsive navigation is missing.');
-if (!html.includes('data-chapter')) throw new Error('Chapter tracking is missing.');
-if (!css.includes('@media (max-width:760px)')) throw new Error('Mobile layout breakpoint is missing.');
-if (!css.includes('prefers-reduced-motion')) throw new Error('Reduced-motion support is missing.');
-if (!css.includes(':focus-visible')) throw new Error('Keyboard focus styling is missing.');
-
-for (const token of [
-  'RI–06 / DIGITAL TWIN / LIVE MODEL',
-  '.scene-view-dock',
-  '[data-ri06-explode]',
-  '.hero__scene::before',
-  '@media (max-width: 900px)'
+for (const copy of [
+  'RACE INTELLIGENCE OS',
+  'ONE RACE STATE.',
+  'EVERY SPECIALIST.',
+  'STRATEGY LAB',
+  'OPERATIONS NETWORK',
+  'SECURE EXPERIENCE LAYER',
+  'PERFORMANCE EVIDENCE'
 ]) {
-  if (!css.includes(token)) throw new Error(`RI-06 visual layer missing: ${token}`);
+  if (!html.includes(copy)) throw new Error(`Required RI-10X copy missing: ${copy}`);
 }
 
-const threeImportPattern = /import\s*\*\s*as\s+THREE\s*from\s*['"]three['"]/;
-if (!threeImportPattern.test(scene)) throw new Error('Three.js namespace import is missing.');
+if ((html.match(/<h1/g) || []).length !== 1) throw new Error('RI-10X must contain exactly one h1.');
+if ((html.match(/data-chapter=/g) || []).length !== 8) throw new Error('RI-10X must expose eight application chapters.');
+if (!html.includes('type="importmap"')) throw new Error('Pinned Three.js import map is missing.');
+if (!html.includes('<dialog')) throw new Error('Control help dialog is missing.');
+if (!html.includes('data-timeline')) throw new Error('Race-state timeline is missing.');
+if (!html.includes('data-strategy-inputs')) throw new Error('Strategy input surface is missing.');
+if (!html.includes('data-network-map')) throw new Error('Operations network is missing.');
+if (!html.includes('aria-label')) throw new Error('Accessible labels are missing.');
 
-for (const token of [
-  'WebGLRenderer',
-  'CapsuleGeometry',
-  'TubeGeometry',
-  'CatmullRomCurve3',
-  'setMode',
-  'pointerdown',
-  'ResizeObserver',
-  'IntersectionObserver',
-  'requestAnimationFrame',
-  'RI06_DIGITAL_TWIN',
-  'createCarbonTexture',
-  'loftGeometryRi06',
-  'airfoilGeometry',
-  'PMREMGenerator',
-  'ExtrudeGeometry',
-  'ri06Wheels',
-  'drsFlap',
-  'data-ri06-explode',
-  "modelReadout.textContent = 'RI–06'"
-]) {
-  if (!scene.includes(token)) throw new Error(`3D scene capability missing: ${token}`);
+for (const token of [':focus-visible', 'prefers-reduced-motion', '@media (max-width: 820px)', '.command-deck', '.strategy-workbench', '.network-map', '.telemetry-rail']) {
+  if (!css.includes(token)) throw new Error(`Visual-system capability missing: ${token}`);
+}
+for (const token of ['createStore', 'IntersectionObserver', 'generateTelemetry', 'computeStrategy', 'drawTelemetryChart', 'drawOutcomeChart', 'localStorage', 'encodeShareState']) {
+  if (!app.includes(token)) throw new Error(`Application capability missing: ${token}`);
+}
+for (const token of ['WebGLRenderer', 'loftGeometry', 'Raycaster', 'setExplode', 'setView', 'setCameraPreset', 'ResizeObserver', 'requestAnimationFrame']) {
+  if (!scene.includes(token)) throw new Error(`Digital-twin capability missing: ${token}`);
 }
 
-for (const token of ['showModal', 'is-complete', 'IntersectionObserver', 'data-progress-bar', 'aria-expanded']) {
-  if (!ui.includes(token)) throw new Error(`Core UI behavior missing: ${token}`);
+const replayA = generateTelemetry();
+const replayB = generateTelemetry();
+if (JSON.stringify(replayA) !== JSON.stringify(replayB)) throw new Error('Telemetry replay is not deterministic.');
+if (replayA.length !== 72 || replayA.some((item) => !Number.isFinite(item.speed) || !Number.isFinite(item.latency))) throw new Error('Telemetry replay is invalid.');
+
+for (const scenarioId of Object.keys(SCENARIOS)) {
+  const inputs = defaultScenarioInputs(scenarioId);
+  const first = computeStrategy(scenarioId, inputs);
+  const second = computeStrategy(scenarioId, inputs);
+  if (JSON.stringify(first) !== JSON.stringify(second)) throw new Error(`${scenarioId} strategy is not deterministic.`);
+  if (!first.recommendation || first.confidence < 0 || first.confidence > 100 || first.ranked.length !== 3) throw new Error(`${scenarioId} strategy output is invalid.`);
 }
 
-for (const file of ['assets/favicon.svg', '.github/workflows/deploy-pages.yml', '.github/workflows/validate-pr.yml']) {
-  await access(file);
-}
+for (const file of ['assets/favicon.svg', '.github/workflows/deploy-pages.yml', '.github/workflows/validate-pr.yml']) await access(file);
 
-const validationDir = await mkdtemp(join(tmpdir(), 'race-intelligence-'));
+const validationDir = await mkdtemp(join(tmpdir(), 'ri10x-check-'));
 try {
-  const scenePath = join(validationDir, 'scene.mjs');
-  const uiPath = join(validationDir, 'ui.js');
-  await writeFile(scenePath, scene);
-  await writeFile(uiPath, ui);
-  await execFileAsync(process.execPath, ['--check', scenePath]);
-  await execFileAsync(process.execPath, ['--check', uiPath]);
+  for (const file of ['app.js', 'scene.js', 'core.mjs']) {
+    const source = await readFile(`${sourceRoot}/${file}`, 'utf8');
+    const target = join(validationDir, file.endsWith('.mjs') ? file : `${file}.mjs`);
+    await writeFile(target, source);
+    await execFileAsync(process.execPath, ['--check', target]);
+  }
 } finally {
   await rm(validationDir, { recursive: true, force: true });
 }
 
-console.log('Race Intelligence RI-06 integrity checks passed.');
+const totalBytes = (await Promise.all(files.map(async (file) => (await stat(`${sourceRoot}/${file}`)).size))).reduce((sum, value) => sum + value, 0);
+if (totalBytes > 520_000) throw new Error(`RI-10X source budget exceeded: ${totalBytes} bytes.`);
+
+console.log(`RI-10X validation passed. Deterministic telemetry: ${replayA.length} frames. Strategy scenarios: ${Object.keys(SCENARIOS).length}. Source: ${totalBytes} bytes.`);
