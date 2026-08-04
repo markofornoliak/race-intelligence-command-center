@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en" data-theme="command">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#05080d" />
+  <meta name="description" content="Race Intelligence OS — an interactive Formula 1 digital-twin and race-decision command environment." />
+  <meta property="og:title" content="Race Intelligence OS — RI-10X" />
+  <meta property="og:description" content="One race state. Every specialist. Before the next corner." />
+  <title>Race Intelligence OS — RI-10X</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="styles.css" />
+  <script type="importmap">
+    {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js"}}
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#command">Skip to command deck</a>
+
+  <div class="boot" data-boot role="status" aria-live="polite">
+    <div class="boot__brand"><i></i><span>RI–10X</span></div>
+    <p>INITIALIZING RACE INTELLIGENCE OS</p>
+    <div class="boot__track"><span data-boot-progress></span></div>
+    <div class="boot__matrix">
+      <span>MODEL <b data-boot-model>QUEUED</b></span>
+      <span>RACE STATE <b>READY</b></span>
+      <span>GRAPHICS <b data-boot-graphics>CHECKING</b></span>
+    </div>
+  </div>
+
+  <header class="topbar">
+    <a class="brand" href="#command" aria-label="Race Intelligence OS command deck">
+      <span class="brand__mark" aria-hidden="true"><i></i><i></i></span>
+      <span><b>RACE INTELLIGENCE</b><small>OPERATING SYSTEM / RI–10X</small></span>
+    </a>
+    <div class="session-status"><i></i><span>SESSION LINKED</span><b>RACE / LAP 21</b></div>
+    <div class="mode-switch" aria-label="Experience mode">
+      <button data-mode-switch="guided">GUIDED</button>
+      <button class="is-active" data-mode-switch="explore">EXPLORE</button>
+      <button data-mode-switch="strategy">STRATEGY</button>
+    </div>
+    <button class="utility-button utility-button--menu" type="button" data-menu-toggle aria-expanded="false" aria-controls="mobileNav">MENU</button>
+  </header>
+
+  <aside class="chapter-rail" aria-label="Command chapters">
+    <span class="chapter-rail__label">MISSION INDEX</span>
+    <nav>
+      <a class="is-active" href="#command" data-chapter-link="command"><b>01</b><span>Command Deck</span></a>
+      <a href="#twin" data-chapter-link="twin"><b>02</b><span>Digital Twin</span></a>
+      <a href="#race-state" data-chapter-link="race-state"><b>03</b><span>Race State</span></a>
+      <a href="#strategy" data-chapter-link="strategy"><b>04</b><span>Strategy Lab</span></a>
+      <a href="#network" data-chapter-link="network"><b>05</b><span>Operations</span></a>
+      <a href="#secure" data-chapter-link="secure"><b>06</b><span>Secure Layer</span></a>
+      <a href="#evidence" data-chapter-link="evidence"><b>07</b><span>Evidence</span></a>
+      <a href="#final" data-chapter-link="final"><b>08</b><span>Final Brief</span></a>
+    </nav>
+    <div class="chapter-progress"><span data-progress-bar></span></div>
+  </aside>
+
+  <aside class="utility-rail" aria-label="System utilities">
+    <button type="button" data-sound aria-pressed="false"><span>SOUND</span><b>MUTED</b></button>
+    <button type="button" data-motion aria-pressed="false"><span>MOTION</span><b>FULL</b></button>
+    <button type="button" data-quality><span>QUALITY</span><b>AUTO</b></button>
+    <button type="button" data-help aria-haspopup="dialog"><span>CONTROL</span><b>HELP</b></button>
+  </aside>
+
+  <nav class="mobile-nav" id="mobileNav" data-mobile-nav aria-label="Mobile chapters">
+    <a href="#command">01 Command</a><a href="#twin">02 Twin</a><a href="#race-state">03 State</a><a href="#strategy">04 Strategy</a><a href="#network">05 Network</a><a href="#secure">06 Secure</a><a href="#evidence">07 Evidence</a><a href="#final">08 Final</a>
+  </nav>
+
+  <main class="app-shell">
+    <section class="chapter command-deck" id="command" data-chapter="command" aria-labelledby="command-title">
+      <div class="command-copy">
+        <p class="eyebrow">CHAPTER 01 / COMMAND DECK</p>
+        <h1 id="command-title">ONE RACE STATE.<br><span>EVERY SPECIALIST.</span><br>BEFORE THE NEXT CORNER.</h1>
+        <p class="lede">The car, simulation stack, specialists and governed application environment operate as one synchronized decision system.</p>
+        <div class="command-actions">
+          <button class="primary-action" type="button" data-start-briefing><span>START GUIDED BRIEFING</span><b>08 CHAPTERS</b></button>
+          <a class="text-action" href="#strategy">ENTER STRATEGY LAB <span>↘</span></a>
+        </div>
+        <div class="session-capsules" aria-label="Current session state">
+          <span><small>CIRCUIT</small><b>NIGHT / 5.41 KM</b></span>
+          <span><small>RACE STATE</small><b>GREEN / LAP 21</b></span>
+          <span><small>MODEL CONFIDENCE</small><b data-hero-confidence>98.8%</b></span>
+        </div>
+      </div>
+
+      <div class="twin-viewport" data-scene-shell>
+        <canvas id="carScene" tabindex="0" aria-label="Interactive Formula 1 digital twin. Drag to rotate, use arrow keys, or select engineering components."></canvas>
+        <div class="scene-fallback" data-scene-fallback hidden>
+          <svg viewBox="0 0 1000 440" role="img" aria-label="Formula 1 technical silhouette">
+            <path d="M44 273l104-26 74-89 184-18 68-76h142l83 95 180 39 92 66-67 27-113-13c-17 70-76 117-148 117-74 0-134-48-150-120H381c-16 72-76 120-149 120-72 0-132-47-149-117l-61 5z"/>
+            <circle cx="232" cy="278" r="95"/><circle cx="643" cy="278" r="95"/>
+          </svg>
+          <p>LIGHTWEIGHT TECHNICAL VIEW</p>
+        </div>
+        <div class="viewport-grid" aria-hidden="true"></div>
+        <div class="viewport-tag"><span>RI–10X / DIGITAL TWIN</span><b data-scene-status>INITIALIZING</b></div>
+        <div class="camera-dock" aria-label="Camera presets">
+          <button class="is-active" data-camera="hero">HERO</button><button data-camera="front">FRONT</button><button data-camera="cockpit">COCKPIT</button><button data-camera="side">SIDE</button><button data-camera="top">TOP</button><button data-camera="rear">REAR</button>
+        </div>
+        <div class="view-dock" aria-label="Visualization mode">
+          <button class="is-active" data-view="studio">STUDIO</button><button data-view="technical">TECH</button><button data-view="aero">AERO</button><button data-view="thermal">THERMAL</button><button data-view="data">DATA</button>
+        </div>
+        <label class="explode-control"><span>EXPLODED VIEW</span><input type="range" min="0" max="100" value="0" data-explode /><b data-explode-value>0%</b></label>
+      </div>
+
+      <aside class="systems-inspector" aria-labelledby="inspector-title">
+        <div class="panel-heading"><span>ACTIVE COMPONENT</span><b>LIVE</b></div>
+        <p class="inspector-index" data-component-index>07 / 11</p>
+        <h2 id="inspector-title" data-component-name>Floor + tunnels</h2>
+        <p data-component-fact>Generates the majority of downforce through controlled underfloor pressure.</p>
+        <dl>
+          <div><dt>SYSTEM</dt><dd data-component-system>AERO</dd></div>
+          <div><dt>HEALTH</dt><dd data-component-health>95%</dd></div>
+          <div><dt>CHANNELS</dt><dd data-component-channels>21</dd></div>
+          <div><dt>SYNC</dt><dd>11.4 MS</dd></div>
+        </dl>
+        <div class="component-list" data-component-list aria-label="Select car component"></div>
+      </aside>
+    </section>
+
+    <section class="chapter twin-chapter" id="twin" data-chapter="twin" aria-labelledby="twin-title">
+      <header class="chapter-heading">
+        <p class="eyebrow">CHAPTER 02 / DIGITAL TWIN</p>
+        <h2 id="twin-title">THE CAR IS A<br><span>DECISION SURFACE.</span></h2>
+        <p>Inspect the physical systems, isolate a component and switch between the engineering lenses used to understand performance.</p>
+      </header>
+      <div class="system-matrix" data-system-matrix></div>
+      <div class="twin-explainers">
+        <article><span>01</span><h3>Stable component model</h3><p>Every selected part has a persistent ID, authored explode vector, operating system and telemetry context.</p></article>
+        <article><span>02</span><h3>Five engineering lenses</h3><p>Studio, technical, aero, thermal and data views reveal different layers without changing the underlying race state.</p></article>
+        <article><span>03</span><h3>One interaction language</h3><p>Pointer, keyboard and inspector selection resolve to the same component state and camera response.</p></article>
+      </div>
+    </section>
+
+    <section class="chapter race-state" id="race-state" data-chapter="race-state" aria-labelledby="state-title">
+      <header class="chapter-heading chapter-heading--compact">
+        <p class="eyebrow">CHAPTER 03 / RACE STATE</p>
+        <h2 id="state-title">RAW SIGNAL.<br><span>ONE OPERATIONAL TRUTH.</span></h2>
+      </header>
+      <div class="state-toolbar">
+        <div><span>REPLAY TIME</span><b data-replay-time>05:15</b></div>
+        <label><span>TIMELINE</span><input type="range" min="0" max="71" value="39" data-timeline /></label>
+        <button type="button" data-compare aria-pressed="false">COMPARE PREVIOUS LAP</button>
+      </div>
+      <div class="race-grid">
+        <article class="track-card panel">
+          <div class="panel-heading"><span>CIRCUIT POSITION</span><b data-lap-readout>LAP 24 / S1</b></div>
+          <svg class="circuit" viewBox="0 0 520 360" aria-label="Illustrative circuit map">
+            <path d="M92 243C59 189 73 112 144 84c58-23 100 22 153 14 55-8 88-71 151-43 64 28 31 91-6 122-34 28-11 79-55 110-46 33-106-2-149 19-76 37-117-1-146-63z"/>
+            <circle data-car-marker cx="290" cy="99" r="8"/>
+          </svg>
+          <div class="track-legend"><span><i></i>CAR 07</span><span><i></i>EVENT MARKER</span><span><i></i>FORECAST CELL</span></div>
+        </article>
+        <article class="telemetry-card panel">
+          <div class="panel-heading"><span>TELEMETRY WINDOW</span><b>DETERMINISTIC REPLAY</b></div>
+          <canvas data-telemetry-chart width="900" height="360" aria-label="Speed and lap delta chart"></canvas>
+          <div class="metric-row">
+            <span><small>SPEED</small><b data-metric="speed">—</b><i>KM/H</i></span>
+            <span><small>ENERGY</small><b data-metric="energy">—</b><i>%</i></span>
+            <span><small>FUEL Δ</small><b data-metric="fuelDelta">—</b><i>KG</i></span>
+            <span><small>AERO BAL.</small><b data-metric="aeroBalance">—</b><i>%F</i></span>
+          </div>
+        </article>
+        <article class="tyre-card panel">
+          <div class="panel-heading"><span>TYRE STATE</span><b>°C</b></div>
+          <div class="tyre-matrix">
+            <span><small>FL</small><b data-tyre="tyreFL">—</b></span><span><small>FR</small><b data-tyre="tyreFR">—</b></span><span><small>RL</small><b data-tyre="tyreRL">—</b></span><span><small>RR</small><b data-tyre="tyreRR">—</b></span>
+          </div>
+          <dl class="mini-dl"><div><dt>BRAKE PEAK</dt><dd data-metric="brakeTemp">—</dd></div><div><dt>TRACK</dt><dd data-metric="trackTemp">—</dd></div><div><dt>RAIN</dt><dd data-metric="rainfall">—</dd></div></dl>
+        </article>
+        <article class="event-card panel">
+          <div class="panel-heading"><span>EVENT STREAM</span><b>SYNCED</b></div>
+          <ol data-event-stream></ol>
+        </article>
+      </div>
+    </section>
+
+    <section class="chapter strategy-lab" id="strategy" data-chapter="strategy" aria-labelledby="strategy-title">
+      <header class="chapter-heading">
+        <p class="eyebrow">CHAPTER 04 / STRATEGY LAB</p>
+        <h2 id="strategy-title">FROM MODEL<br><span>TO COMMITTED DECISION.</span></h2>
+        <p>Change constrained race inputs. The recommendation, confidence and expected outcome update from transparent deterministic logic.</p>
+      </header>
+      <div class="scenario-tabs" role="tablist" aria-label="Strategy scenarios">
+        <button class="is-active" role="tab" data-scenario="undercut">A / UNDERCUT</button>
+        <button role="tab" data-scenario="safety">B / SAFETY CAR</button>
+        <button role="tab" data-scenario="rain">C / RAIN TRANSITION</button>
+      </div>
+      <div class="strategy-workbench">
+        <section class="strategy-inputs panel" aria-labelledby="scenario-heading">
+          <div class="panel-heading"><span>SCENARIO INPUTS</span><b>ILLUSTRATIVE</b></div>
+          <h3 id="scenario-heading" data-scenario-title>Undercut window</h3>
+          <p data-scenario-description></p>
+          <div data-strategy-inputs></div>
+        </section>
+        <section class="recommendation panel" aria-live="polite">
+          <div class="panel-heading"><span>RECOMMENDATION ENGINE</span><b>LIVE</b></div>
+          <p class="recommendation__label">RECOMMENDED ACTION</p>
+          <h3 data-recommendation>PIT NOW</h3>
+          <div class="confidence-ring" style="--confidence:82" data-confidence-ring><span><b data-confidence>82</b><small>% CONFIDENCE</small></span></div>
+          <div class="recommendation__metrics"><span><small>TIME IMPACT</small><b data-time-impact>−0.82 S</b></span><span><small>RISK</small><b data-risk>CONTROLLED</b></span></div>
+          <button class="primary-action" type="button" data-commit-decision><span>COMMIT DECISION</span><b>ISSUE SEQUENCE</b></button>
+        </section>
+        <section class="rationale panel">
+          <div class="panel-heading"><span>RATIONALE TREE</span><b>EXPLAINABLE</b></div>
+          <ol data-rationale></ol>
+          <div class="action-sequence" data-action-sequence></div>
+        </section>
+        <section class="outcome panel">
+          <div class="panel-heading"><span>OUTCOME PROJECTION</span><b data-outcome-status>PREVIEW</b></div>
+          <canvas data-outcome-chart width="900" height="300" aria-label="Projected strategy outcome"></canvas>
+          <div data-ranked-options class="ranked-options"></div>
+        </section>
+      </div>
+    </section>
+
+    <section class="chapter operations-network" id="network" data-chapter="network" aria-labelledby="network-title">
+      <header class="chapter-heading chapter-heading--compact">
+        <p class="eyebrow">CHAPTER 05 / OPERATIONS NETWORK</p>
+        <h2 id="network-title">THE DECISION<br><span>MOVES. THE STATE STAYS ONE.</span></h2>
+      </header>
+      <div class="network-layout">
+        <div class="network-map panel" data-network-map aria-label="Interactive race operations network"></div>
+        <aside class="network-inspector panel">
+          <div class="panel-heading"><span>SELECTED NODE</span><b data-network-latency>11.4 MS</b></div>
+          <p class="inspector-index" data-node-index>04 / 08</p>
+          <h3 data-node-name>Factory simulation</h3>
+          <p data-node-description>Runs high-value simulation workloads against the same governed race state used at the circuit.</p>
+          <dl class="mini-dl"><div><dt>APPLICATIONS</dt><dd data-node-apps>3</dd></div><div><dt>ACTIVE SIGNALS</dt><dd data-node-signals>18</dd></div><div><dt>STATE</dt><dd data-node-state>SYNCED</dd></div></dl>
+        </aside>
+      </div>
+    </section>
+
+    <section class="chapter secure-layer" id="secure" data-chapter="secure" aria-labelledby="secure-title">
+      <header class="chapter-heading">
+        <p class="eyebrow">CHAPTER 06 / SECURE EXPERIENCE LAYER</p>
+        <h2 id="secure-title">MOVE THE EXPERIENCE.<br><span>KEEP THE DATA GOVERNED.</span></h2>
+        <p>The engineering application reaches the specialist while high-value workloads and datasets remain inside the controlled environment.</p>
+      </header>
+      <div class="secure-console">
+        <div class="transport-panel panel">
+          <div class="panel-heading"><span>TRANSPORT CONDITION</span><b data-transport-state>OPTIMAL</b></div>
+          <div class="network-toggle"><button class="is-active" data-network-mode="normal">NORMAL</button><button data-network-mode="degraded">DEGRADED</button></div>
+          <div class="transport-line"><span>GARAGE</span><i></i><b>GOVERNED ENVIRONMENT</b><i></i><span>SPECIALIST</span></div>
+          <div class="transport-metrics"><span><small>LATENCY</small><b data-secure-latency>11.4 MS</b></span><span><small>PACKET LOSS</small><b data-packet-loss>0.1%</b></span><span><small>EXPERIENCE</small><b data-experience-state>HIGH FIDELITY</b></span></div>
+        </div>
+        <div class="principle-grid">
+          <article class="panel"><span>01</span><h3>Adaptive transport</h3><p>Session behavior responds to network conditions while preserving operational continuity.</p></article>
+          <article class="panel"><span>02</span><h3>Graphics intelligence</h3><p>Interactive regions remain responsive and visual detail refines when the viewport settles.</p></article>
+          <article class="panel"><span>03</span><h3>Central control</h3><p>Applications and sensitive datasets remain governed even when specialists are distributed.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="chapter evidence" id="evidence" data-chapter="evidence" aria-labelledby="evidence-title">
+      <header class="chapter-heading chapter-heading--compact">
+        <p class="eyebrow">CHAPTER 07 / PERFORMANCE EVIDENCE</p>
+        <h2 id="evidence-title">THE OPERATING<br><span>ADVANTAGE, MEASURED.</span></h2>
+      </header>
+      <div class="evidence-grid">
+        <article><span>01</span><b>1</b><h3>Governed race state</h3><p>One deterministic replay drives every chart, component highlight and recommendation.</p></article>
+        <article><span>02</span><b>3</b><h3>Decision scenarios</h3><p>Undercut, safety-car and rain-transition models remain repeatable and explainable.</p></article>
+        <article><span>03</span><b>5</b><h3>Engineering lenses</h3><p>Studio, technical, aero, thermal and data views reveal the same digital twin.</p></article>
+        <article><span>04</span><b>8</b><h3>Connected chapters</h3><p>The product narrative is navigable, stateful and no longer a decorative scroll sequence.</p></article>
+      </div>
+    </section>
+
+    <section class="chapter final-brief" id="final" data-chapter="final" aria-labelledby="final-title">
+      <p class="eyebrow">CHAPTER 08 / FINAL BRIEF</p>
+      <h2 id="final-title">WHEN THE LIGHTS COME ON,<br><span>THE ANSWER IS ALREADY THERE.</span></h2>
+      <p>One car. One governed race state. Every specialist operating before the opportunity closes.</p>
+      <div><a class="primary-action" href="#command"><span>REPLAY COMMAND DECK</span><b>↑</b></a><button class="text-action" type="button" data-reset-session>RESET SESSION ↻</button></div>
+    </section>
+  </main>
+
+  <footer class="telemetry-rail" aria-label="Global race telemetry">
+    <span><small>RACE STATE</small><b>GREEN</b></span>
+    <span><small>LAP</small><b data-footer-lap>24 / 57</b></span>
+    <span><small>TYRE WINDOW</small><b data-footer-tyre>96.4°C</b></span>
+    <span><small>ENERGY</small><b data-footer-energy>62%</b></span>
+    <span><small>FACTORY ↔ GARAGE</small><b data-footer-latency>11.4 MS</b></span>
+    <span><small>MODEL CONFIDENCE</small><b data-footer-confidence>98.8%</b></span>
+  </footer>
+
+  <dialog class="help-dialog" data-help-dialog aria-labelledby="help-title">
+    <button type="button" class="dialog-close" data-help-close aria-label="Close help">×</button>
+    <p class="eyebrow">RI–10X / CONTROL REFERENCE</p>
+    <h2 id="help-title">OPERATE THE COMMAND ENVIRONMENT.</h2>
+    <div><article><b>MODEL</b><p>Drag to rotate. Scroll to zoom. Use arrow keys from the canvas. Select a component in the inspector.</p></article><article><b>NAVIGATION</b><p>Use the chapter rail, page keys or browser back and forward. Hash state tracks the active chapter.</p></article><article><b>STRATEGY</b><p>Change constrained inputs, inspect the rationale, then commit a decision to replay the projected outcome.</p></article></div>
+  </dialog>
+
+  <script type="module" src="app.js"></script>
+  <script type="module" src="scene.js"></script>
+</body>
+</html>
