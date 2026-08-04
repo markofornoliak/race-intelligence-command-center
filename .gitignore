@@ -1,0 +1,7 @@
+dist/
+index.html
+styles.css
+app.js
+scene.js
+core.mjs
+.DS_Store
