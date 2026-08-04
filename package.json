@@ -1,11 +1,12 @@
 {
   "name": "race-intelligence-command-center",
-  "version": "2.0.0",
+  "version": "10.0.0",
   "private": true,
   "type": "module",
   "scripts": {
     "start": "npm run build && node server.mjs",
     "test": "node scripts/check.mjs",
-    "build": "node scripts/build.mjs"
+    "build": "node scripts/build.mjs",
+    "validate": "npm test && npm run build"
   }
 }

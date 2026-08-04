@@ -1,43 +1,25 @@
-# Race Intelligence Command Center
+# Race Intelligence OS — RI-10X
 
-A cinematic Formula 1 data-performance microsite presented as a confidential race-morning engineering briefing rather than a conventional technology landing page.
+RI-10X is a stateful Formula 1 digital-twin and race-decision command environment. It replaces the previous cinematic microsite architecture with one deterministic application state shared across the command deck, digital twin, race replay, strategy scenarios, operations network and secure experience layer.
 
-## Experience
+## What changed
 
-- interactive dimensional Formula 1 engineering model
-- systems, aerodynamic and data-flow visualization modes
-- projected engineering annotations and telemetry
-- live decision matrix and race-operations narrative
-- Citrix HDX campaign chapter
-- accessible dialog, keyboard controls and mobile navigation
-- reduced-motion support and responsive layouts
-- dependency-free production build
-
-## RI-10X roadmap
-
-The next major release is governed by the [RI-10X Master Build Brief](docs/RI10X_MASTER_BUILD_BRIEF.md). It defines the target product architecture, section-by-section experience, file ownership, digital-twin asset pipeline, deterministic simulation model, performance budgets, testing gates and phased implementation sequence.
-
-Implementation must begin with the foundation migration defined in Phase 0 and Phase 1 of the brief. New RI-10X features must not be added to the legacy `.part` architecture.
+- Eight connected application chapters with persistent command navigation
+- Interactive Three.js Formula 1 digital twin with component selection, six camera presets, five engineering views and authored exploded offsets
+- Deterministic 72-frame race-state replay with synchronized telemetry, circuit position, tyre state and event stream
+- Three explainable strategy scenarios: undercut, safety car and rain transition
+- Data-driven operations network and normal/degraded transport states
+- Session persistence, URL-shareable strategy state, keyboard navigation, mobile compositions and reduced-motion support
+- Clean `src/ri10x/` source architecture; legacy `.part` files are no longer used by the build
+- Determinism, syntax, accessibility-token, source-budget and production-build validation
 
 ## Technology
 
-- semantic HTML
-- modern CSS
-- vanilla JavaScript
-- Three.js 0.180.0 loaded as a pinned ES module
-- Node.js validation and static build scripts
-- GitHub Pages deployment workflow
-
-## Source structure
-
-The production files are assembled from ordered, reviewable source parts:
-
-- `src/index/` — semantic page structure
-- `src/styles/` — visual system and responsive layouts
-- `src/scene/` — maintainable Three.js engineering scene
-- `src/ui/` — navigation, reveal, modal and telemetry behavior
-
-Running the build writes the assembled files to the repository root for local preview and to `dist/` for deployment.
+- Semantic HTML and modern CSS
+- Vanilla ES modules with a small observable state store
+- Three.js 0.180.0 through a pinned import map
+- Deterministic simulation and strategy logic shared between browser and Node tests
+- Static Node.js build for GitHub Pages
 
 ## Run locally
 
@@ -54,4 +36,17 @@ npm test
 npm run build
 ```
 
-The production output is generated in `dist/`.
+The deployable site is generated in `dist/` and GitHub Pages deploys it through `.github/workflows/deploy-pages.yml`.
+
+## Source structure
+
+```text
+src/ri10x/
+├── index.html
+├── styles.css
+├── core.mjs
+├── app.js
+└── scene.js
+```
+
+The old ordered `.part` source remains in repository history for reference but is not part of the RI-10X build path.
