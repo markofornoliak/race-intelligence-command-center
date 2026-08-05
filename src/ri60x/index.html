@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en" data-quality="auto" data-mode="studio">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#080b0f" />
+  <meta name="description" content="Race Intelligence Command Center — a modular Formula engineering digital twin, telemetry and vehicle dynamics workspace." />
+  <meta name="application-version" content="RI-60X Unified Runtime" />
+  <title>Race Intelligence Command Center — RI-60X</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="stylesheet" href="styles.css" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#workspace">Skip to engineering workspace</a>
+
+  <div class="app" data-app>
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="Race Intelligence home">
+        <span class="brand__glyph" aria-hidden="true"><i></i><i></i></span>
+        <span><strong>Race Intelligence</strong><small>Vehicle engineering command center</small></span>
+      </a>
+
+      <div class="topbar__center" aria-label="Current system state">
+        <span class="status-dot"></span>
+        <span data-session-label>Studio session</span>
+        <strong data-session-time>00:00.000</strong>
+      </div>
+
+      <div class="topbar__actions">
+        <button class="icon-button" type="button" data-action="quality" aria-label="Graphics quality">AUTO</button>
+        <button class="icon-button" type="button" data-action="fullscreen" aria-label="Toggle fullscreen">FULL</button>
+        <button class="icon-button" type="button" data-action="help" aria-label="Open controls help">?</button>
+      </div>
+    </header>
+
+    <main class="stage-shell">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero__copy" data-hero-copy>
+          <p class="eyebrow">RI-60X / UNIFIED VEHICLE RUNTIME</p>
+          <h1 id="hero-title">Engineering clarity.<br><span>One vehicle state.</span></h1>
+          <p>Inspect the car, isolate aerodynamic systems, replay dynamic events and compare telemetry without breaking the authored 3D model.</p>
+          <div class="hero__actions">
+            <button class="primary-button" type="button" data-action="enter">Enter Command Center</button>
+            <button class="secondary-button" type="button" data-action="cinematic">Play camera tour</button>
+          </div>
+        </div>
+
+        <div class="viewport" data-viewport>
+          <canvas id="vehicle-canvas" aria-label="Interactive Formula race car digital twin. Drag to orbit, pinch or scroll to zoom, double-click a component to focus."></canvas>
+          <div class="viewport__fallback" data-webgl-fallback hidden>
+            <div class="fallback-car" aria-hidden="true"></div>
+            <strong>3D acceleration is unavailable</strong>
+            <p>The command interface remains available in lightweight mode.</p>
+          </div>
+
+          <div class="viewport__label viewport__label--top">
+            <span data-view-label>Studio</span>
+            <span data-light-label>Neutral studio</span>
+          </div>
+          <div class="viewport__label viewport__label--bottom">
+            <span data-component-label>Vehicle / complete assembly</span>
+            <span data-performance-label>Auto quality</span>
+          </div>
+
+          <div class="focus-reticle" data-focus-reticle aria-hidden="true"><i></i><i></i></div>
+          <div class="toast-stack" data-toast-stack aria-live="polite"></div>
+          <div class="component-tooltip" data-component-tooltip hidden></div>
+        </div>
+
+        <div class="hero__quick-actions" aria-label="Primary vehicle actions">
+          <button type="button" data-mode="studio" class="is-active"><span>Studio</span><small>Materials and lighting</small></button>
+          <button type="button" data-mode="technical"><span>Technical</span><small>Systems and load paths</small></button>
+          <button type="button" data-mode="cfd"><span>CFD</span><small>Pressure and streamlines</small></button>
+          <button type="button" data-mode="dynamics"><span>Dynamics</span><small>Suspension and events</small></button>
+        </div>
+      </section>
+
+      <section class="workspace" id="workspace" data-workspace aria-label="Vehicle engineering workspace" hidden>
+        <nav class="workspace__nav" aria-label="Workspace level">
+          <button type="button" data-workspace-tab="control" class="is-active">Control</button>
+          <button type="button" data-workspace-tab="diagnostics">Diagnostics</button>
+          <button type="button" data-workspace-tab="analysis">Analysis</button>
+        </nav>
+
+        <div class="workspace__body">
+          <aside class="control-panel" data-panel="control">
+            <div class="panel-heading">
+              <div><span>Vehicle view</span><strong data-panel-title>Studio</strong></div>
+              <button type="button" class="close-button" data-action="close-workspace" aria-label="Close workspace">×</button>
+            </div>
+
+            <section class="control-section">
+              <header><span>Visualization</span><button type="button" data-action="reset-scene">Reset scene</button></header>
+              <div class="mode-list">
+                <button type="button" data-mode="studio" class="is-active"><strong>Studio</strong><small>Clean authored vehicle</small></button>
+                <button type="button" data-mode="technical"><strong>Technical</strong><small>Component and load inspection</small></button>
+                <button type="button" data-mode="cfd"><strong>CFD</strong><small>Aerodynamic visualization</small></button>
+                <button type="button" data-mode="thermal"><strong>Thermal</strong><small>Brake and tyre temperatures</small></button>
+                <button type="button" data-mode="dynamics"><strong>Dynamics</strong><small>Suspension events</small></button>
+              </div>
+            </section>
+
+            <section class="control-section">
+              <header><span>Camera</span><button type="button" data-action="auto-orbit">Auto orbit</button></header>
+              <div class="camera-grid">
+                <button type="button" data-camera="hero" class="is-active">Hero</button>
+                <button type="button" data-camera="front">Front</button>
+                <button type="button" data-camera="rear">Rear</button>
+                <button type="button" data-camera="side">Side</button>
+                <button type="button" data-camera="top">Top</button>
+                <button type="button" data-camera="cockpit">Cockpit</button>
+                <button type="button" data-camera="suspension">Suspension</button>
+                <button type="button" data-camera="floor">Floor</button>
+              </div>
+            </section>
+
+            <section class="control-section">
+              <header><span>Lighting</span></header>
+              <div class="preset-row">
+                <button type="button" data-light="studio" class="is-active">Studio</button>
+                <button type="button" data-light="technical">Technical</button>
+                <button type="button" data-light="night">Night garage</button>
+                <button type="button" data-light="inspection">Inspection</button>
+              </div>
+            </section>
+
+            <section class="control-section" data-cfd-controls hidden>
+              <header><span>Aerodynamic zones</span><button type="button" data-action="toggle-cfd-all">All zones</button></header>
+              <div class="toggle-list">
+                <label><input type="checkbox" data-cfd-zone="frontWing" checked /><span>Front-wing wake</span></label>
+                <label><input type="checkbox" data-cfd-zone="tyres" checked /><span>Tyre wake</span></label>
+                <label><input type="checkbox" data-cfd-zone="floor" checked /><span>Floor flow</span></label>
+                <label><input type="checkbox" data-cfd-zone="diffuser" checked /><span>Diffuser wake</span></label>
+              </div>
+              <label class="range-field"><span>Flow speed</span><input type="range" min="0.25" max="2" step="0.05" value="1" data-flow-speed /><output>1.00×</output></label>
+              <label class="range-field"><span>Vehicle speed</span><input type="range" min="80" max="340" step="5" value="260" data-vehicle-speed /><output>260 km/h</output></label>
+              <div class="aero-balance"><span>Front aero balance</span><div><i data-aero-front></i><i data-aero-rear></i></div><strong data-aero-balance>45.8 / 54.2</strong></div>
+            </section>
+
+            <section class="control-section" data-dynamics-controls hidden>
+              <header><span>Dynamic event</span><button type="button" data-action="record-event">Record</button></header>
+              <div class="event-grid">
+                <button type="button" data-event="braking">Braking</button>
+                <button type="button" data-event="cornering">Cornering</button>
+                <button type="button" data-event="kerb">Kerb strike</button>
+                <button type="button" data-event="neutral" class="is-active">Neutral</button>
+              </div>
+              <div class="metric-grid metric-grid--compact">
+                <div><span>Steering</span><strong data-dyn-steering>0.0°</strong></div>
+                <div><span>Pitch</span><strong data-dyn-pitch>0.0°</strong></div>
+                <div><span>Roll</span><strong data-dyn-roll>0.0°</strong></div>
+                <div><span>Heave</span><strong data-dyn-heave>0 mm</strong></div>
+              </div>
+            </section>
+          </aside>
+
+          <aside class="control-panel" data-panel="diagnostics" hidden>
+            <div class="panel-heading">
+              <div><span>System health</span><strong>Diagnostics</strong></div>
+              <button type="button" class="close-button" data-action="close-workspace" aria-label="Close workspace">×</button>
+            </div>
+            <div class="metric-grid">
+              <div><span>Frame rate</span><strong data-fps>-- fps</strong><small data-fps-state>Measuring</small></div>
+              <div><span>Draw calls</span><strong data-draw-calls>--</strong><small>Renderer</small></div>
+              <div><span>Triangles</span><strong data-triangles>--</strong><small>Current frame</small></div>
+              <div><span>Quality tier</span><strong data-quality-tier>Auto</strong><small data-device-class>Detecting device</small></div>
+            </div>
+            <section class="control-section">
+              <header><span>Quality manager</span></header>
+              <div class="quality-list">
+                <button type="button" data-quality="auto" class="is-active"><strong>Auto</strong><small>Adaptive performance target</small></button>
+                <button type="button" data-quality="high"><strong>High</strong><small>Maximum model and shadow detail</small></button>
+                <button type="button" data-quality="balanced"><strong>Balanced</strong><small>Stable desktop performance</small></button>
+                <button type="button" data-quality="mobile"><strong>Mobile</strong><small>Reduced effects and particles</small></button>
+              </div>
+            </section>
+            <section class="control-section">
+              <header><span>Runtime status</span></header>
+              <ul class="status-list" data-runtime-status>
+                <li><i></i><span>Vehicle hierarchy</span><strong>Locked</strong></li>
+                <li><i></i><span>Overlay lifecycle</span><strong>Ready</strong></li>
+                <li><i></i><span>Telemetry engine</span><strong>Deterministic</strong></li>
+                <li><i></i><span>Visibility pause</span><strong>Enabled</strong></li>
+              </ul>
+            </section>
+          </aside>
+
+          <aside class="analysis-panel" data-panel="analysis" hidden>
+            <div class="panel-heading">
+              <div><span>Synchronized replay</span><strong>Vehicle Lab</strong></div>
+              <button type="button" class="close-button" data-action="close-workspace" aria-label="Close workspace">×</button>
+            </div>
+
+            <div class="telemetry-kpis">
+              <div><span>Speed</span><strong data-tel-speed>0</strong><small>km/h</small></div>
+              <div><span>RPM</span><strong data-tel-rpm>0</strong><small>rev/min</small></div>
+              <div><span>Gear</span><strong data-tel-gear>N</strong><small>selected</small></div>
+              <div><span>Delta</span><strong data-tel-delta>+0.000</strong><small>seconds</small></div>
+            </div>
+
+            <section class="chart-card">
+              <header><span>Lap telemetry</span><div><button type="button" data-action="compare-lap">Compare lap</button><button type="button" data-action="export-csv">CSV</button><button type="button" data-action="export-json">JSON</button></div></header>
+              <canvas data-telemetry-chart aria-label="Synchronized speed, throttle, brake, RPM and tyre temperature telemetry chart"></canvas>
+              <div class="chart-legend">
+                <span><i data-series="speed"></i>Speed</span>
+                <span><i data-series="throttle"></i>Throttle</span>
+                <span><i data-series="brake"></i>Brake</span>
+                <span><i data-series="tyre"></i>Tyre temperature</span>
+              </div>
+            </section>
+
+            <section class="wheel-card">
+              <header><span>Wheel loads</span><strong data-event-label>Neutral state</strong></header>
+              <div class="wheel-grid">
+                <div data-wheel="fl"><span>Front left</span><strong data-travel>0.0 mm</strong><small data-load>0.00 kN</small><i><b></b></i></div>
+                <div data-wheel="fr"><span>Front right</span><strong data-travel>0.0 mm</strong><small data-load>0.00 kN</small><i><b></b></i></div>
+                <div data-wheel="rl"><span>Rear left</span><strong data-travel>0.0 mm</strong><small data-load>0.00 kN</small><i><b></b></i></div>
+                <div data-wheel="rr"><span>Rear right</span><strong data-travel>0.0 mm</strong><small data-load>0.00 kN</small><i><b></b></i></div>
+              </div>
+            </section>
+
+            <div class="timeline">
+              <button type="button" data-action="play" aria-label="Play or pause telemetry"><span data-play-icon>▶</span></button>
+              <strong data-timeline-time>00:00.000</strong>
+              <label><span class="sr-only">Telemetry timeline</span><input type="range" min="0" max="899" value="0" data-timeline /></label>
+              <div class="timeline__speed">
+                <button type="button" data-playback="0.5">0.5×</button>
+                <button type="button" data-playback="1" class="is-active">1×</button>
+                <button type="button" data-playback="2">2×</button>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+    </main>
+
+    <footer class="bottom-dock" aria-label="Command center navigation">
+      <button type="button" data-dock="vehicle" class="is-active"><span>Vehicle</span><small>3D inspection</small></button>
+      <button type="button" data-dock="diagnostics"><span>Diagnostics</span><small>Performance health</small></button>
+      <button type="button" data-dock="analysis"><span>Vehicle Lab</span><small>Telemetry and dynamics</small></button>
+      <button type="button" data-action="reset-camera"><span>Reset camera</span><small>Restore authored view</small></button>
+    </footer>
+  </div>
+
+  <dialog class="help-dialog" data-help-dialog>
+    <form method="dialog">
+      <button type="submit" aria-label="Close help">×</button>
+      <span>Controls</span>
+      <h2>Inspect the vehicle without losing orientation.</h2>
+      <dl>
+        <div><dt>Orbit</dt><dd>Drag with one finger or the primary mouse button.</dd></div>
+        <div><dt>Zoom</dt><dd>Pinch or use the mouse wheel. Zoom is constrained outside the model.</dd></div>
+        <div><dt>Focus</dt><dd>Double-click a component to move the camera to a safe inspection distance.</dd></div>
+        <div><dt>Reset</dt><dd>Use Reset Camera for the view or Reset Scene for all overlays and playback state.</dd></div>
+      </dl>
+    </form>
+  </dialog>
+
+  <script type="module" src="bootstrap.js"></script>
+</body>
+</html>
