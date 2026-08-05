@@ -1,0 +1,41 @@
+name: Materialize RI-60X Source
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.bootstrap/trigger'
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout publication package
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - name: Decode RI-60X source package
+        run: |
+          cat .bootstrap/chunks/*.b64 | base64 --decode > /tmp/ri60x-source.tar.xz
+          tar -xJf /tmp/ri60x-source.tar.xz
+      - name: Validate materialized source
+        run: npm test && npm run build
+      - name: Publish readable source tree
+        run: |
+          rm -rf .bootstrap/chunks
+          rm -f .github/workflows/source-unpack.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "Publish RI-60X unified runtime"
+          git push
