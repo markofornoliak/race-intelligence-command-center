@@ -1,17 +1,32 @@
-# Race Intelligence OS — RI-40X
+# Race Intelligence OS — RI-50X
 
-RI-40X is an interactive Formula race-operations environment with a hybrid 3D architecture. The default Studio presentation uses an artist-authored, textured high-detail car, while Technical, Aerodynamic, Thermal, Data, component-focus and exploded modes use the local procedural engineering twin.
+RI-50X is an immersive Formula race-operations command center built around one synchronized race state. It combines a high-detail presentation car, a local engineering digital twin, deterministic telemetry replay, strategy simulation, pit execution and distributed engineering operations in a single browser experience.
 
-## RI-40X vehicle presentation
+## What changed in RI-50X
 
-- Artist-authored 397.9k-triangle Formula car as the default photoreal Studio model
-- Original model: **Formula 1 Car** by **Steven Samuel**, published under **CC Attribution**
+RI-50X is a structural experience upgrade rather than a cosmetic theme revision.
+
+- Full-screen cinematic entry sequence with progressive system initialization
+- Persistent command dock for Overview, Aero, Thermal, Systems, Exploded and Focus modes
+- Live telemetry ribbon connected to the deterministic race frame
+- Vehicle HUD showing speed, gear, RPM, brake temperature, tyre temperature and ERS state
+- Decision brief panel tied to strategy confidence, recommendation and network condition
+- Distraction-free cinematic vehicle focus mode
+- Expanded responsive behavior for desktop, tablet and mobile command layouts
+- New engineering hangar with animated studio architecture, screens, lighting and atmosphere
+- Camera-shot event system connecting UI modes to authored 3D views
+- Stronger offline caching and explicit RI-50X production build pipeline
+
+## Hybrid 3D vehicle system
+
+### Photoreal presentation model
+
+- Artist-authored 397.9k-triangle Formula car used in the default Studio presentation
+- Original model: **Formula 1 Car** by **Steven Samuel**, published under **Creative Commons Attribution**
 - Integrated through the public Sketchfab Viewer API with explicit in-product attribution
 - Dedicated PHOTOREAL / ENGINEERING renderer switch
-- Automatic transition to the engineering renderer for component inspection and analytical lenses
+- Automatic transition to the engineering renderer for analytical views and component inspection
 - Graceful local fallback when third-party resources are blocked, unavailable or offline
-- One photoreal viewer instance shared between the Command and Digital Twin chapters
-- Reduced-motion, mobile and lightweight behavior preserved
 
 Model source and attribution:
 
@@ -19,18 +34,33 @@ Model source and attribution:
 - Author: Steven Samuel / spsvision
 - License: Creative Commons Attribution
 
-## Local engineering twin
+### Local engineering twin
 
 - More than 450 selectable rendered parts across 13 engineering systems
 - Multi-element front and rear wings, DRS, beam wing and mounting structures
 - Sculpted monocoque, crash structure, cockpit, steering controls and titanium halo
 - Sidepod undercuts, cooling louvres, radiators, turbo, battery modules and exhaust routing
-- Floor planform, edge wings, fences, venturi tunnels, diffuser channels and strakes
+- Floor planform, edge wings, venturi tunnels, diffuser channels and strakes
 - Detailed tyres, rims, spokes, hubs, brakes, uprights, wishbones, pushrods and springs
 - Procedural carbon weave, brushed metal and tyre textures
-- Physical paint, carbon, rubber, titanium, glass, ceramic and emissive materials
 - Telemetry-driven wheel rotation, steering, brake glow, DRS, cooling motion and airflow speed
-- Raycast selection, isolation, focus helpers and exploded inspection
+- Raycast selection, component isolation, camera focus and exploded inspection
+- RI-40X.1 detail pass with mirrors, T-camera, pitot system, aerials, floor fences, wheel covers, rain light, energy spine and floor sparks
+
+## RI-50X engineering hangar
+
+The local renderer now operates inside an authored race-engineering environment:
+
+- Reflective technical floor with illuminated grid and centerline
+- Rotating inspection platform with dual illuminated rings
+- Structural rear and side walls with modular bays
+- Full overhead truss system and animated light bars
+- Four live engineering screens with generated telemetry traces
+- Pit-wall workstation with desks, monitors and glass partition
+- Volumetric light cones, atmospheric particles and animated floor beacons
+- Vehicle scanning plane for Technical and Data views
+- Camera choreography driven by `ri:cinematic-shot` events
+- Quality-aware behavior for constrained and lightweight devices
 
 ## Race-operations product
 
@@ -46,8 +76,9 @@ Model source and attribution:
 
 - Semantic HTML and responsive command-interface CSS
 - Vanilla ES modules with a small observable store
-- Three.js 0.180.0 for the local engineering renderer
+- Three.js 0.180.0 for the local engineering renderer and hangar
 - Sketchfab Viewer API 1.12.1 for the artist-authored presentation model
+- Canvas-generated textures, telemetry displays and engineering graphics
 - Deterministic browser/Node simulation logic
 - Static Node.js build and GitHub Pages deployment
 
@@ -66,21 +97,29 @@ npm test
 npm run build
 ```
 
-Validation checks the hybrid renderer coordinator, engineering-model depth, JavaScript syntax, deterministic replay, strategy simulations, accessibility hooks, responsive behavior, offline fallback and source budget.
+Validation covers the hybrid renderer, local engineering depth, RI-50X interface system, hangar capabilities, JavaScript syntax, deterministic replay, strategy simulations, accessibility hooks, responsive behavior, offline fallback and source budget.
 
 ## Source structure
 
 ```text
-src/ri20x/
-├── index.html
-├── styles.css
-├── core.mjs
-├── visuals.js
-├── app.js
-├── scene.js                 # RI-40X renderer coordinator
-├── engineering-scene.js     # local RI-30X engineering twin
-├── manifest.webmanifest
-└── sw.js
+src/
+├── ri20x/                   # core product, simulations and base renderer
+│   ├── index.html
+│   ├── styles.css
+│   ├── core.mjs
+│   ├── visuals.js
+│   ├── app.js
+│   ├── scene.js
+│   ├── engineering-scene.js
+│   ├── manifest.webmanifest
+│   └── sw.js
+├── ri30x/                   # readability and vehicle-detail upgrades
+│   ├── styles.upgrade.css
+│   └── scene.upgrade.js
+└── ri50x/                   # immersive command-center generation
+    ├── experience.css
+    ├── experience.js
+    └── hangar-scene.js
 ```
 
-The deployable site is generated in `dist/` and published by `.github/workflows/deploy-pages.yml`.
+`scripts/build.mjs` assembles the layers into the deployable `dist/` package. GitHub Pages is published by `.github/workflows/deploy-pages.yml` after validation and production build complete successfully.
