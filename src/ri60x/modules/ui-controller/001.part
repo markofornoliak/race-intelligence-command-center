@@ -1,0 +1,121 @@
+import { ChartRenderer } from './chart-renderer.js';
+import { downloadText, formatTime } from './utils.js';
+
+const MODE_LABELS = {
+  studio: 'Studio',
+  technical: 'Technical',
+  cfd: 'CFD',
+  thermal: 'Thermal',
+  dynamics: 'Dynamics'
+};
+
+const LIGHT_LABELS = {
+  studio: 'Neutral studio',
+  technical: 'Technical white',
+  night: 'Night garage',
+  inspection: 'Inspection bay'
+};
+
+export class UIController extends EventTarget {
+  constructor({ state, telemetry, qualityManager, cameraController, overlayManager, runtime, vehicle }) {
+    super();
+    this.state = state;
+    this.telemetry = telemetry;
+    this.qualityManager = qualityManager;
+    this.cameraController = cameraController;
+    this.overlayManager = overlayManager;
+    this.runtime = runtime;
+    this.vehicle = vehicle;
+    this.root = document.querySelector('[data-app]');
+    this.workspace = document.querySelector('[data-workspace]');
+    this.heroCopy = document.querySelector('[data-hero-copy]');
+    this.helpDialog = document.querySelector('[data-help-dialog]');
+    this.tooltip = document.querySelector('[data-component-tooltip]');
+    this.toastStack = document.querySelector('[data-toast-stack]');
+    this.chart = new ChartRenderer(document.querySelector('[data-telemetry-chart]'), telemetry);
+    this.telemetryFrame = telemetry.current;
+    this.statsTimer = 0;
+    this.bind();
+    this.syncAll();
+  }
+
+  all(selector) {
+    return [...document.querySelectorAll(selector)];
+  }
+
+  bind() {
+    document.addEventListener('click', (event) => {
+      const button = event.target.closest('button');
+      if (!button) return;
+      const { action, mode, camera, light, workspaceTab, dock, quality, event: dynamicEvent, playback } = button.dataset;
+      if (action) this.handleAction(action, button);
+      if (mode) this.state.set('mode', mode, 'ui');
+      if (camera) this.state.set('cameraPreset', camera, 'ui');
+      if (light) this.state.set('lightPreset', light, 'ui');
+      if (workspaceTab) this.openWorkspace(workspaceTab);
+      if (dock) this.handleDock(dock);
+      if (quality) this.state.set('quality', quality, 'ui');
+      if (dynamicEvent) this.state.set('dynamics.event', dynamicEvent, 'ui');
+      if (playback) this.state.set('playback.speed', Number(playback), 'ui');
+    });
+
+    document.querySelector('[data-flow-speed]')?.addEventListener('input', (event) => {
+      const value = Number(event.target.value);
+      event.target.nextElementSibling.textContent = `${value.toFixed(2)}×`;
+      this.state.set('cfd.flowSpeed', value, 'ui');
+    });
+    document.querySelector('[data-vehicle-speed]')?.addEventListener('input', (event) => {
+      const value = Number(event.target.value);
+      event.target.nextElementSibling.textContent = `${value} km/h`;
+      this.state.set('cfd.vehicleSpeed', value, 'ui');
+    });
+    this.all('[data-cfd-zone]').forEach((input) => input.addEventListener('change', () => {
+      this.state.set(`cfd.zones.${input.dataset.cfdZone}`, input.checked, 'ui');
+    }));
+    document.querySelector('[data-timeline]')?.addEventListener('input', (event) => {
+      this.state.set('playback.index', Number(event.target.value), 'ui');
+    });
+
+    this.state.addEventListener('change', (event) => this.onStateChange(event.detail));
+    this.telemetry.addEventListener('frame', (event) => this.updateTelemetry(event.detail));
+    this.telemetry.addEventListener('playback', () => this.syncPlayback());
+    this.qualityManager.addEventListener('change', (event) => {
+      this.state.set('quality', event.detail.reason === 'fps-drop' ? 'auto' : this.state.get('quality'), 'quality-manager');
+      this.syncQuality();
+      if (event.detail.reason === 'fps-drop') this.toast('Quality adjusted', `Graphics were reduced to ${event.detail.tier} to protect frame rate.`);
+    });
+    this.cameraController.addEventListener('preset', (event) => {
+      this.state.set('cameraPreset', event.detail.name, 'camera');
+    });
+    this.cameraController.addEventListener('focus', (event) => {
+      const component = event.detail.object.userData.component;
+      if (component) this.updateComponent(component);
+    });
+    this.cameraController.addEventListener('cinematic', (event) => {
+      this.state.set('cinematic', event.detail.active, 'camera');
+      this.runtime.setCinematicDOF(event.detail.active);
+    });
+
+    const canvas = document.querySelector('#vehicle-canvas');
+    canvas.addEventListener('pointermove', (event) => this.showPointerComponent(event));
+    canvas.addEventListener('pointerleave', () => { this.tooltip.hidden = true; });
+    document.addEventListener('visibilitychange', () => {
+      this.toast(document.hidden ? 'Rendering paused' : 'Rendering resumed', document.hidden ? 'The 3D loop is suspended while this tab is inactive.' : 'Vehicle rendering is active again.', 1500);
+    });
+    window.addEventListener('orientationchange', () => setTimeout(() => this.runtime.resize(), 180));
+  }
+
+  handleAction(action) {
+    if (action === 'enter') this.openWorkspace('control');
+    if (action === 'close-workspace') this.closeWorkspace();
+    if (action === 'help') this.helpDialog.showModal();
+    if (action === 'fullscreen') this.toggleFullscreen();
+    if (action === 'cinematic') this.cameraController.startCinematic();
+    if (action === 'reset-camera') this.cameraController.reset();
+    if (action === 'reset-scene') this.dispatchEvent(new CustomEvent('reset-scene'));
+    if (action === 'auto-orbit') this.state.set('autoOrbit', !this.state.get('autoOrbit'), 'ui');
+    if (action === 'quality') this.openWorkspace('diagnostics');
+    if (action === 'play') this.state.set('playback.playing', !this.state.get('playback.playing'), 'ui');
+    if (action === 'compare-lap') this.state.set('compareLap', !this.state.get('compareLap'), 'ui');
+    if (action === 'export-csv') downloadText('ri60x-telemetry.csv', this.telemetry.exportCSV(), 'text/csv');
+    if (action === 'export-json') downloadText('ri60x-telemetry.json', this.telemetry.exp

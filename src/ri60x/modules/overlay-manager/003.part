@@ -1,0 +1,106 @@
+es = [...this.recordedFrames];
+      this.playbackIndex = 0;
+    }
+  }
+
+  dynamicState(phase) {
+    const wave = Math.sin(phase * Math.PI * 2);
+    if (this.event === 'braking') {
+      const pulse = smoothstep(0, .18, phase) * (1 - smoothstep(.68, 1, phase));
+      return { pitch: -1.7 * pulse, roll: .15 * wave, heave: -8 * pulse, steering: 0, travel: { fl: 24 * pulse, fr: 23 * pulse, rl: -8 * pulse, rr: -8 * pulse }, loads: { fl: 8.6, fr: 8.4, rl: 4.6, rr: 4.7 } };
+    }
+    if (this.event === 'cornering') {
+      const pulse = Math.sin(Math.PI * phase);
+      return { pitch: -.15 * pulse, roll: 2.1 * pulse, heave: -3 * pulse, steering: 13.5 * pulse, travel: { fl: -13 * pulse, fr: 19 * pulse, rl: -10 * pulse, rr: 16 * pulse }, loads: { fl: 4.4, fr: 8.2, rl: 5.1, rr: 9.0 } };
+    }
+    if (this.event === 'kerb') {
+      const impulse = Math.sin(phase * Math.PI * 10) * Math.exp(-phase * 5.2);
+      return { pitch: .45 * impulse, roll: -2.8 * impulse, heave: 9 * impulse, steering: 4 * Math.sin(phase * Math.PI), travel: { fl: 34 * impulse, fr: -4 * impulse, rl: 19 * impulse, rr: -3 * impulse }, loads: { fl: 10.8, fr: 4.2, rl: 8.0, rr: 4.8 } };
+    }
+    return { pitch: 0, roll: 0, heave: 0, steering: 0, travel: { fl: 0, fr: 0, rl: 0, rr: 0 }, loads: { fl: 6.0, fr: 6.0, rl: 6.8, rr: 6.8 } };
+  }
+
+  updateDynamics(delta) {
+    if (!this.dynamicsBuilt || !this.groups.dynamics.visible) return null;
+    let state;
+    if (this.playbackFrames?.length) {
+      state = this.playbackFrames[Math.floor(this.playbackIndex) % this.playbackFrames.length];
+      this.playbackIndex += delta * 60;
+      if (this.playbackIndex >= this.playbackFrames.length) this.playbackFrames = null;
+    } else {
+      const duration = this.event === 'kerb' ? 1.8 : 3.5;
+      this.eventPhase = (this.eventPhase + delta / duration) % 1;
+      state = this.dynamicState(this.eventPhase);
+      if (this.recording) {
+        this.recordedFrames.push(structuredClone(state));
+        if (this.recordedFrames.length > 360) this.setRecording(false);
+      }
+    }
+
+    this.dynamicFrame.rotation.z = THREE.MathUtils.degToRad(state.roll);
+    this.dynamicFrame.rotation.x = THREE.MathUtils.degToRad(state.pitch);
+    this.dynamicFrame.position.y = state.heave / 1000;
+    for (const [key, marker] of Object.entries(this.suspensionMarkers)) {
+      const travel = state.travel[key];
+      const compression = travel >= 0;
+      const color = compression ? 0xff6b73 : 0x61d398;
+      marker.ring.material.color.setHex(color);
+      marker.travel.material.color.setHex(color);
+      marker.travel.scale.y = .35 + Math.min(Math.abs(travel) / 35, 1) * .75;
+      marker.travel.position.y = .2 + marker.travel.scale.y * .22;
+      this.contactPatches[key].material.color.setHex(color);
+      this.contactPatches[key].scale.x = 1 + Math.min(state.loads[key] / 12, 1) * .55;
+      this.contactPatches[key].scale.y = .4 + Math.min(state.loads[key] / 12, 1) * .35;
+    }
+    for (const { key, arrow } of this.loadVectors) {
+      const normalized = clamp(state.loads[key] / 11, .28, 1);
+      const length = clamp(.25 + normalized * .78, .25, 1.05);
+      arrow.setLength(length, Math.min(.18, length * .25), Math.min(.09, length * .16));
+      arrow.position.y = .64;
+    }
+    return state;
+  }
+
+  updateThermal(values, elapsed) {
+    if (!this.thermalBuilt) return;
+    this.thermalHalos.forEach((halo, index) => {
+      const temp = values[index] || 420;
+      const intensity = clamp((temp - 250) / 900, .08, .72);
+      halo.material.opacity = intensity * (.72 + Math.sin(elapsed * 2.4 + index) * .08);
+      halo.scale.setScalar(1 + intensity * .12);
+    });
+  }
+
+  update(delta, elapsed, thermalValues) {
+    if (this.cfdBuilt && this.groups.cfd.visible) {
+      const speedFactor = clamp(this.vehicleSpeed / 260, .22, 1.55) * this.flowSpeed;
+      this.flowCurves.forEach((item, index) => {
+        const t = (elapsed * .16 * speedFactor + item.phase + index * .011) % 1;
+        this.flowMarkers[index].position.copy(item.curve.getPointAt(t));
+        this.flowMarkers[index].scale.setScalar(.72 + speedFactor * .18);
+      });
+    }
+    if (this.thermalBuilt && this.groups.thermal.visible) this.updateThermal(thermalValues, elapsed);
+    return this.updateDynamics(delta);
+  }
+
+  reset() {
+    this.event = 'neutral';
+    this.eventPhase = 0;
+    this.recording = false;
+    this.recordedFrames = [];
+    this.playbackFrames = null;
+    this.flowSpeed = 1;
+    this.vehicleSpeed = 260;
+    for (const zone of ZONES) this.setZone(zone, true);
+    if (this.dynamicFrame) {
+      this.dynamicFrame.rotation.set(0, 0, 0);
+      this.dynamicFrame.position.set(0, 0, 0);
+    }
+  }
+
+  dispose() {
+    Object.values(this.groups).forEach(disposeGroup);
+    this.scene.remove(this.root);
+  }
+}

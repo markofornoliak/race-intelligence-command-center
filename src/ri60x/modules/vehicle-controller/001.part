@@ -1,0 +1,165 @@
+import * as THREE from 'three';
+
+const FRONT_X = -2.95;
+const REAR_X = 2.32;
+const HALF_TRACK = 1.18;
+const WHEEL_RADIUS = .61;
+
+function shadow(mesh) {
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  return mesh;
+}
+
+function box(size, material, radius = 0) {
+  const geometry = new THREE.BoxGeometry(size.x, size.y, size.z, radius ? 3 : 1, radius ? 2 : 1, radius ? 2 : 1);
+  if (radius) {
+    const position = geometry.attributes.position;
+    const half = size.clone().multiplyScalar(.5);
+    for (let i = 0; i < position.count; i += 1) {
+      const p = new THREE.Vector3().fromBufferAttribute(position, i);
+      const q = p.clone();
+      q.x = Math.sign(q.x) * Math.max(Math.abs(q.x) - radius, 0);
+      q.y = Math.sign(q.y) * Math.max(Math.abs(q.y) - radius, 0);
+      q.z = Math.sign(q.z) * Math.max(Math.abs(q.z) - radius, 0);
+      const offset = p.sub(q);
+      if (offset.lengthSq()) offset.setLength(radius);
+      q.add(offset);
+      q.x = THREE.MathUtils.clamp(q.x, -half.x, half.x);
+      q.y = THREE.MathUtils.clamp(q.y, -half.y, half.y);
+      q.z = THREE.MathUtils.clamp(q.z, -half.z, half.z);
+      position.setXYZ(i, q.x, q.y, q.z);
+    }
+    geometry.computeVertexNormals();
+  }
+  return shadow(new THREE.Mesh(geometry, material));
+}
+
+function cylinderBetween(start, end, radius, material, radialSegments = 12) {
+  const direction = end.clone().sub(start);
+  const length = direction.length();
+  const geometry = new THREE.CylinderGeometry(radius, radius, length, radialSegments, 1, false);
+  const mesh = shadow(new THREE.Mesh(geometry, material));
+  mesh.position.copy(start).add(end).multiplyScalar(.5);
+  mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction.normalize());
+  return mesh;
+}
+
+function latheBody(points, material, radialSegments = 32) {
+  const geometry = new THREE.LatheGeometry(points, radialSegments);
+  geometry.rotateZ(Math.PI / 2);
+  return shadow(new THREE.Mesh(geometry, material));
+}
+
+function customLoft(sections) {
+  const vertices = [];
+  const indices = [];
+  const ring = 8;
+  for (const section of sections) {
+    const { x, y, z, width, height } = section;
+    for (let i = 0; i < ring; i += 1) {
+      const angle = (i / ring) * Math.PI * 2;
+      const cy = Math.sin(angle);
+      const cz = Math.cos(angle);
+      vertices.push(x, y + cy * height * .5, z + cz * width * .5);
+    }
+  }
+  for (let s = 0; s < sections.length - 1; s += 1) {
+    for (let i = 0; i < ring; i += 1) {
+      const next = (i + 1) % ring;
+      const a = s * ring + i;
+      const b = s * ring + next;
+      const c = (s + 1) * ring + next;
+      const d = (s + 1) * ring + i;
+      indices.push(a, b, d, b, c, d);
+    }
+  }
+  for (let i = 1; i < ring - 1; i += 1) indices.push(0, i + 1, i);
+  const end = (sections.length - 1) * ring;
+  for (let i = 1; i < ring - 1; i += 1) indices.push(end, end + i, end + i + 1);
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
+function named(mesh, name, system, description) {
+  mesh.name = name;
+  mesh.userData.component = { name, system, description };
+  return mesh;
+}
+
+export class VehicleController extends EventTarget {
+  constructor(scene, materials, qualityManager) {
+    super();
+    this.scene = scene;
+    this.materials = materials;
+    this.qualityManager = qualityManager;
+    this.root = new THREE.Group();
+    this.root.name = 'RI60X_AUTHORED_VEHICLE';
+    this.root.position.y = .64;
+    this.scene.add(this.root);
+    this.components = [];
+    this.wheels = {};
+    this.brakeDiscs = [];
+    this.drsFlap = null;
+    this.originalTransforms = new Map();
+    this.build();
+    this.lockAuthoredTransforms();
+  }
+
+  add(mesh, parent = this.root) {
+    parent.add(mesh);
+    if (mesh.userData.component) this.components.push(mesh);
+    return mesh;
+  }
+
+  build() {
+    const M = (name) => this.materials.get(name);
+
+    const floor = named(box(new THREE.Vector3(4.45, .075, 1.78), M('carbonMatte'), .06), 'Ground-effect floor', 'Aerodynamics', 'Structural floor with venturi inlets, fences and diffuser feed.');
+    floor.position.set(.05, .0, 0);
+    this.add(floor);
+
+    const plank = box(new THREE.Vector3(3.35, .035, .28), M('dark'), .02);
+    plank.position.set(.12, -.057, 0);
+    this.add(plank);
+
+    const floorEdgeShape = new THREE.Shape();
+    floorEdgeShape.moveTo(-2.1, 0);
+    floorEdgeShape.lineTo(1.75, 0);
+    floorEdgeShape.lineTo(2.1, .14);
+    floorEdgeShape.lineTo(1.25, .22);
+    floorEdgeShape.lineTo(-1.8, .18);
+    floorEdgeShape.closePath();
+    const floorEdgeGeometry = new THREE.ExtrudeGeometry(floorEdgeShape, { depth: .035, bevelEnabled: false });
+    floorEdgeGeometry.rotateX(Math.PI / 2);
+    floorEdgeGeometry.translate(0, .01, 0);
+    for (const side of [-1, 1]) {
+      const edge = shadow(new THREE.Mesh(floorEdgeGeometry, M('carbon')));
+      edge.position.z = side * .89;
+      edge.scale.z = side;
+      this.add(edge);
+    }
+
+    for (const side of [-1, 1]) {
+      for (let channel = 0; channel < 3; channel += 1) {
+        const tunnel = box(new THREE.Vector3(2.55, .12 + channel * .025, .18), M('dark'), .05);
+        tunnel.position.set(.55, .015 + channel * .015, side * (.2 + channel * .23));
+        tunnel.rotation.z = THREE.MathUtils.degToRad(-1.2 - channel * .7);
+        this.add(tunnel);
+      }
+    }
+
+    const monocoqueGeometry = customLoft([
+      { x: -1.75, y: .47, z: 0, width: .34, height: .30 },
+      { x: -1.05, y: .58, z: 0, width: .72, height: .54 },
+      { x: -.18, y: .69, z: 0, width: .92, height: .66 },
+      { x: .72, y: .62, z: 0, width: .82, height: .60 },
+      { x: 1.45, y: .53, z: 0, width: .58, height: .43 }
+    ]);
+    const monocoque = named(shadow(new THREE.Mesh(monocoqueGeometry, M('carbon'))), 'Carbon monocoque', 'Chassis', 'Primary survival cell and suspension load path.');
+    this.add(monocoque);
+
+    const engineCover

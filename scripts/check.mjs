@@ -20,14 +20,16 @@ async function walk(directory) {
 }
 
 const files = await walk(root);
-const textFiles = files.filter((file) => /\.(?:html|css|js|webmanifest)$/.test(file));
+const textFiles = files.filter((file) => /\.(?:html|css|js|webmanifest|part)$/.test(file));
 const source = Object.fromEntries(await Promise.all(textFiles.map(async (file) => [relative(root, file), await readFile(file, 'utf8')])));
+const joinParts = (directory) => Object.entries(source).filter(([path]) => path.startsWith(`${directory}/`) && path.endsWith('.part')).sort(([a], [b]) => a.localeCompare(b)).map(([, value]) => value).join('');
 const html = source['index.html'];
-const css = source['styles.css'];
+const css = joinParts('styles');
 const app = source['app.js'];
 const bootstrap = source['bootstrap.js'];
-const vehicle = source['modules/vehicle-controller.js'];
-const overlays = source['modules/overlay-manager.js'];
+const vehicle = joinParts('modules/vehicle-controller');
+const overlays = joinParts('modules/overlay-manager');
+const ui = joinParts('modules/ui-controller');
 const camera = source['modules/camera-controller.js'];
 const quality = source['modules/quality-manager.js'];
 const telemetrySource = source['modules/telemetry-engine.js'];
@@ -52,9 +54,10 @@ if (!bootstrap.includes("await import('./app.js')") || !app.includes('document.a
 
 const syntaxDirectory = await mkdtemp(join(tmpdir(), 'ri60x-syntax-'));
 try {
-  for (const file of files.filter((path) => path.endsWith('.js'))) {
-    const temp = join(syntaxDirectory, relative(root, file).replaceAll('/', '__').replace(/\.js$/, '.mjs'));
-    await writeFile(temp, await readFile(file, 'utf8'));
+  const syntaxSources = [...files.filter((path) => path.endsWith('.js')).map((file) => [relative(root, file), source[relative(root, file)]]), ['modules/vehicle-controller.js', vehicle], ['modules/overlay-manager.js', overlays], ['modules/ui-controller.js', ui]];
+  for (const [name, content] of syntaxSources) {
+    const temp = join(syntaxDirectory, name.replaceAll('/', '__').replace(/\.js$/, '.mjs'));
+    await writeFile(temp, content);
     await execFileAsync(process.execPath, ['--check', temp]);
   }
   await execFileAsync(process.execPath, ['--check', 'scripts/build.mjs']);

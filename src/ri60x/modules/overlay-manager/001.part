@@ -1,0 +1,162 @@
+import * as THREE from 'three';
+import { clamp, smoothstep } from './utils.js';
+
+const ZONES = ['frontWing', 'tyres', 'floor', 'diffuser'];
+
+function disposeGroup(group) {
+  group.traverse((object) => {
+    object.geometry?.dispose?.();
+    if (Array.isArray(object.material)) object.material.forEach((material) => material.dispose?.());
+    else object.material?.dispose?.();
+  });
+  group.clear();
+}
+
+function lineMaterial(color, opacity = .72) {
+  return new THREE.LineBasicMaterial({ color, transparent: true, opacity, depthWrite: false, blending: THREE.NormalBlending });
+}
+
+export class OverlayManager extends EventTarget {
+  constructor(scene, vehicle, qualityManager) {
+    super();
+    this.scene = scene;
+    this.vehicle = vehicle;
+    this.qualityManager = qualityManager;
+    this.root = new THREE.Group();
+    this.root.name = 'RI60X_ANALYTIC_OVERLAYS';
+    this.scene.add(this.root);
+    this.groups = {
+      technical: new THREE.Group(),
+      cfd: new THREE.Group(),
+      thermal: new THREE.Group(),
+      dynamics: new THREE.Group()
+    };
+    Object.entries(this.groups).forEach(([name, group]) => {
+      group.name = `OVERLAY_${name.toUpperCase()}`;
+      group.visible = false;
+      this.root.add(group);
+    });
+    this.cfdBuilt = false;
+    this.technicalBuilt = false;
+    this.thermalBuilt = false;
+    this.dynamicsBuilt = false;
+    this.flowMarkers = [];
+    this.flowCurves = [];
+    this.zoneObjects = new Map(ZONES.map((zone) => [zone, []]));
+    this.loadVectors = [];
+    this.suspensionMarkers = {};
+    this.contactPatches = {};
+    this.dynamicFrame = null;
+    this.flowSpeed = 1;
+    this.vehicleSpeed = 260;
+    this.event = 'neutral';
+    this.eventPhase = 0;
+    this.recording = false;
+    this.recordedFrames = [];
+    this.playbackFrames = null;
+    this.playbackIndex = 0;
+    this.pressureLegend = { min: -2.4, max: 1.2 };
+    this.qualityManager.addEventListener('change', () => this.rebuildCFD());
+  }
+
+  setMode(mode) {
+    Object.values(this.groups).forEach((group) => { group.visible = false; });
+    if (mode === 'technical') {
+      this.ensureTechnical();
+      this.groups.technical.visible = true;
+    } else if (mode === 'cfd') {
+      this.ensureCFD();
+      this.groups.cfd.visible = true;
+    } else if (mode === 'thermal') {
+      this.ensureThermal();
+      this.groups.thermal.visible = true;
+    } else if (mode === 'dynamics') {
+      this.ensureDynamics();
+      this.groups.dynamics.visible = true;
+    }
+    this.dispatchEvent(new CustomEvent('mode', { detail: { mode } }));
+  }
+
+  ensureTechnical() {
+    if (this.technicalBuilt) return;
+    const group = this.groups.technical;
+    const cyan = 0x86bfd1;
+    const amber = 0xf0b45f;
+    const points = [
+      [new THREE.Vector3(-2.95, 1.25, -1.18), new THREE.Vector3(-1.45, 1.58, -.35), cyan],
+      [new THREE.Vector3(-2.95, 1.25, 1.18), new THREE.Vector3(-1.45, 1.58, .35), cyan],
+      [new THREE.Vector3(2.32, 1.25, -1.18), new THREE.Vector3(1.15, 1.5, -.35), amber],
+      [new THREE.Vector3(2.32, 1.25, 1.18), new THREE.Vector3(1.15, 1.5, .35), amber],
+      [new THREE.Vector3(-3.15, .75, 0), new THREE.Vector3(2.7, .82, 0), 0xff5038]
+    ];
+    for (const [a, b, color] of points) {
+      const geometry = new THREE.BufferGeometry().setFromPoints([a, b]);
+      const line = new THREE.Line(geometry, lineMaterial(color, .68));
+      group.add(line);
+    }
+    for (const x of [-2.95, 2.32]) {
+      for (const z of [-1.18, 1.18]) {
+        const ring = new THREE.Mesh(
+          new THREE.TorusGeometry(.69, .012, 8, 48),
+          new THREE.MeshBasicMaterial({ color: x < 0 ? cyan : amber, transparent: true, opacity: .62, depthWrite: false })
+        );
+        ring.position.set(x, 1.25, z);
+        ring.rotation.y = Math.PI / 2;
+        group.add(ring);
+      }
+    }
+    const box = new THREE.Box3Helper(this.vehicle.getBounds(), 0x6b8799);
+    box.material.transparent = true;
+    box.material.opacity = .22;
+    group.add(box);
+    this.technicalBuilt = true;
+  }
+
+  rebuildCFD() {
+    if (!this.cfdBuilt) return;
+    disposeGroup(this.groups.cfd);
+    this.flowMarkers = [];
+    this.flowCurves = [];
+    this.zoneObjects = new Map(ZONES.map((zone) => [zone, []]));
+    this.cfdBuilt = false;
+    this.ensureCFD();
+  }
+
+  ensureCFD() {
+    if (this.cfdBuilt) return;
+    const group = this.groups.cfd;
+    const maxLines = this.qualityManager.config.cfdLines;
+    const counts = {
+      frontWing: Math.max(4, Math.floor(maxLines * .24)),
+      tyres: Math.max(4, Math.floor(maxLines * .26)),
+      floor: Math.max(4, Math.floor(maxLines * .30)),
+      diffuser: Math.max(4, maxLines - Math.floor(maxLines * .8))
+    };
+    const colors = { frontWing: 0x6ec5ff, tyres: 0xf0b45f, floor: 0x61d398, diffuser: 0xff6b73 };
+    const addCurve = (zone, points, phase) => {
+      const curve = new THREE.CatmullRomCurve3(points, false, 'catmullrom', .25);
+      const geometry = new THREE.BufferGeometry().setFromPoints(curve.getPoints(48));
+      const line = new THREE.Line(geometry, lineMaterial(colors[zone], .52));
+      line.renderOrder = 4;
+      group.add(line);
+      this.zoneObjects.get(zone).push(line);
+      const marker = new THREE.Mesh(
+        new THREE.SphereGeometry(.025, 8, 6),
+        new THREE.MeshBasicMaterial({ color: colors[zone], transparent: true, opacity: .86, depthWrite: false })
+      );
+      marker.renderOrder = 5;
+      group.add(marker);
+      this.zoneObjects.get(zone).push(marker);
+      this.flowCurves.push({ zone, curve, phase });
+      this.flowMarkers.push(marker);
+    };
+
+    for (let i = 0; i < counts.frontWing; i += 1) {
+      const z = THREE.MathUtils.lerp(-1.15, 1.15, (i + .5) / counts.frontWing);
+      addCurve('frontWing', [
+        new THREE.Vector3(-5.2, .82 + Math.sin(i) * .08, z * 1.08),
+        new THREE.Vector3(-3.55, .7, z),
+        new THREE.Vector3(-2.9, .55 + Math.abs(z) * .08, z * 1.03),
+        new THREE.Vector3(-1.8, .58, z * .86),
+        new THREE.Vector3(-.4, .65, z * .62)
+      ], i / c

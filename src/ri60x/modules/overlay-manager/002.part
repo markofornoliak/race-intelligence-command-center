@@ -1,0 +1,162 @@
+ounts.frontWing);
+    }
+    for (let i = 0; i < counts.tyres; i += 1) {
+      const side = i % 2 ? 1 : -1;
+      const wheelX = i < counts.tyres / 2 ? -2.95 : 2.32;
+      const offset = ((i * 0.37) % 1 - .5) * .42;
+      addCurve('tyres', [
+        new THREE.Vector3(wheelX - 1.2, .95 + offset, side * 1.22),
+        new THREE.Vector3(wheelX, .75 + offset * .35, side * 1.22),
+        new THREE.Vector3(wheelX + .8, .85 + Math.abs(offset), side * (1.45 + Math.abs(offset) * .6)),
+        new THREE.Vector3(wheelX + 2.2, 1.05 + Math.abs(offset), side * (1.72 + Math.abs(offset)))
+      ], i / counts.tyres);
+    }
+    for (let i = 0; i < counts.floor; i += 1) {
+      const z = THREE.MathUtils.lerp(-.72, .72, (i + .5) / counts.floor);
+      addCurve('floor', [
+        new THREE.Vector3(-3.7, .22, z * 1.2),
+        new THREE.Vector3(-1.8, .18, z),
+        new THREE.Vector3(.2, .13, z * .88),
+        new THREE.Vector3(1.8, .18, z * .96),
+        new THREE.Vector3(2.75, .44 + Math.abs(z) * .1, z * 1.15)
+      ], i / counts.floor);
+    }
+    for (let i = 0; i < counts.diffuser; i += 1) {
+      const z = THREE.MathUtils.lerp(-.82, .82, (i + .5) / counts.diffuser);
+      addCurve('diffuser', [
+        new THREE.Vector3(1.5, .14, z * .8),
+        new THREE.Vector3(2.3, .32, z),
+        new THREE.Vector3(3.2, .72, z * 1.18),
+        new THREE.Vector3(4.45, 1.08, z * 1.48),
+        new THREE.Vector3(5.6, 1.25, z * 1.72)
+      ], i / counts.diffuser);
+    }
+
+    const pressureMaterial = (color, opacity = .26) => new THREE.MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity,
+      depthWrite: false,
+      polygonOffset: true,
+      polygonOffsetFactor: -2,
+      polygonOffsetUnits: -2,
+      side: THREE.DoubleSide,
+      blending: THREE.NormalBlending
+    });
+    const patches = [
+      ['frontWing', new THREE.Vector3(-3.25, .84, 0), new THREE.Vector3(.55, .018, 2.18), 0x3198ff],
+      ['floor', new THREE.Vector3(-.1, .68, 0), new THREE.Vector3(3.7, .014, 1.52), 0x36d68c],
+      ['diffuser', new THREE.Vector3(2.42, .92, 0), new THREE.Vector3(.72, .014, 1.42), 0xff4a58]
+    ];
+    for (const [zone, position, size, color] of patches) {
+      const patch = new THREE.Mesh(new THREE.BoxGeometry(size.x, size.y, size.z), pressureMaterial(color));
+      patch.position.copy(position);
+      if (zone === 'diffuser') patch.rotation.z = -.2;
+      group.add(patch);
+      this.zoneObjects.get(zone).push(patch);
+    }
+    this.cfdBuilt = true;
+    for (const zone of ZONES) this.setZone(zone, true);
+  }
+
+  ensureThermal() {
+    if (this.thermalBuilt) return;
+    const group = this.groups.thermal;
+    const positions = [
+      [-2.95, 1.25, -1.18], [-2.95, 1.25, 1.18], [2.32, 1.25, -1.18], [2.32, 1.25, 1.18]
+    ];
+    this.thermalHalos = positions.map(([x, y, z]) => {
+      const halo = new THREE.Mesh(
+        new THREE.TorusGeometry(.39, .035, 10, 38),
+        new THREE.MeshBasicMaterial({ color: 0xff5a30, transparent: true, opacity: .2, depthWrite: false, blending: THREE.AdditiveBlending })
+      );
+      halo.position.set(x, y, z);
+      halo.rotation.y = Math.PI / 2;
+      group.add(halo);
+      return halo;
+    });
+    this.thermalBuilt = true;
+  }
+
+  ensureDynamics() {
+    if (this.dynamicsBuilt) return;
+    const group = this.groups.dynamics;
+    this.dynamicFrame = new THREE.Group();
+    this.dynamicFrame.name = 'ANALYTIC_VEHICLE_FRAME';
+    group.add(this.dynamicFrame);
+
+    const wheelPositions = {
+      fl: new THREE.Vector3(-2.95, 1.25, -1.18),
+      fr: new THREE.Vector3(-2.95, 1.25, 1.18),
+      rl: new THREE.Vector3(2.32, 1.25, -1.18),
+      rr: new THREE.Vector3(2.32, 1.25, 1.18)
+    };
+    for (const [key, position] of Object.entries(wheelPositions)) {
+      const marker = new THREE.Group();
+      marker.position.copy(position);
+      const ring = new THREE.Mesh(
+        new THREE.TorusGeometry(.69, .018, 8, 48),
+        new THREE.MeshBasicMaterial({ color: 0x61d398, transparent: true, opacity: .7, depthWrite: false })
+      );
+      ring.rotation.y = Math.PI / 2;
+      marker.add(ring);
+      const travel = new THREE.Mesh(
+        new THREE.BoxGeometry(.03, .55, .03),
+        new THREE.MeshBasicMaterial({ color: 0x61d398, transparent: true, opacity: .72, depthWrite: false })
+      );
+      travel.position.y = .36;
+      marker.add(travel);
+      group.add(marker);
+      this.suspensionMarkers[key] = { root: marker, ring, travel };
+
+      const patch = new THREE.Mesh(
+        new THREE.CircleGeometry(.26, 28),
+        new THREE.MeshBasicMaterial({ color: 0x61d398, transparent: true, opacity: .25, depthWrite: false })
+      );
+      patch.rotation.x = -Math.PI / 2;
+      patch.position.set(position.x, .645, position.z);
+      patch.scale.set(1.2, .45, 1);
+      group.add(patch);
+      this.contactPatches[key] = patch;
+    }
+
+    const vectorData = [
+      ['fl', wheelPositions.fl], ['fr', wheelPositions.fr], ['rl', wheelPositions.rl], ['rr', wheelPositions.rr]
+    ];
+    for (const [key, position] of vectorData) {
+      const arrow = new THREE.ArrowHelper(new THREE.Vector3(0, 1, 0), position.clone(), .7, 0xff5038, .18, .09);
+      arrow.line.material.transparent = true;
+      arrow.line.material.opacity = .78;
+      arrow.cone.material.transparent = true;
+      arrow.cone.material.opacity = .82;
+      group.add(arrow);
+      this.loadVectors.push({ key, arrow });
+    }
+    this.dynamicsBuilt = true;
+  }
+
+  setZone(zone, visible) {
+    for (const object of this.zoneObjects.get(zone) || []) object.visible = visible;
+  }
+
+  setFlowSpeed(value) {
+    this.flowSpeed = clamp(value, .2, 2.5);
+  }
+
+  setVehicleSpeed(value) {
+    this.vehicleSpeed = clamp(value, 0, 380);
+  }
+
+  setEvent(event) {
+    this.ensureDynamics();
+    this.event = event;
+    this.eventPhase = 0;
+    this.playbackFrames = null;
+    this.playbackIndex = 0;
+  }
+
+  setRecording(enabled) {
+    this.recording = enabled;
+    if (enabled) this.recordedFrames = [];
+    else if (this.recordedFrames.length) {
+      this.playbackFram

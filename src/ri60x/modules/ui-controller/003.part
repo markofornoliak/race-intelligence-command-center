@@ -1,0 +1,106 @@
+rue, workspace: tab }, 'ui');
+    this.all('[data-workspace-tab]').forEach((button) => button.classList.toggle('is-active', button.dataset.workspaceTab === tab));
+    this.all('[data-panel]').forEach((panel) => { panel.hidden = panel.dataset.panel !== tab; });
+    this.all('[data-dock]').forEach((button) => button.classList.toggle('is-active', (tab === 'control' && button.dataset.dock === 'vehicle') || button.dataset.dock === tab));
+    setTimeout(() => {
+      this.runtime.resize();
+      this.chart.draw();
+    }, 80);
+  }
+
+  closeWorkspace() {
+    this.workspace.hidden = true;
+    this.heroCopy.classList.remove('is-hidden');
+    this.state.set('workspaceOpen', false, 'ui');
+  }
+
+  updateTelemetry({ frame, compare, index }) {
+    this.telemetryFrame = frame;
+    this.state.set('playback.index', index, 'telemetry');
+    const timeline = document.querySelector('[data-timeline]');
+    if (timeline && document.activeElement !== timeline) timeline.value = index;
+    document.querySelector('[data-timeline-time]').textContent = formatTime(frame.time);
+    document.querySelector('[data-session-time]').textContent = formatTime(frame.time);
+    document.querySelector('[data-tel-speed]').textContent = Math.round(frame.speed);
+    document.querySelector('[data-tel-rpm]').textContent = Math.round(frame.rpm).toLocaleString('en-US');
+    document.querySelector('[data-tel-gear]').textContent = frame.gear;
+    const delta = this.state.get('compareLap') ? frame.delta - compare.delta : frame.delta;
+    const deltaElement = document.querySelector('[data-tel-delta]');
+    deltaElement.textContent = `${delta >= 0 ? '+' : ''}${delta.toFixed(3)}`;
+    deltaElement.style.color = delta <= 0 ? 'var(--success)' : 'var(--danger)';
+    this.chart.setIndex(index);
+    this.updateWheelMetrics(frame.suspension, frame.wheelLoads);
+  }
+
+  updateWheelMetrics(travel, loads) {
+    for (const key of Object.keys(travel)) {
+      const element = document.querySelector(`[data-wheel="${key}"]`);
+      if (!element) continue;
+      element.querySelector('[data-travel]').textContent = `${travel[key] >= 0 ? '+' : ''}${travel[key].toFixed(1)} mm`;
+      element.querySelector('[data-load]').textContent = `${loads[key].toFixed(2)} kN`;
+      element.querySelector('b').style.width = `${Math.min(100, loads[key] / 11 * 100)}%`;
+      element.querySelector('b').style.background = travel[key] >= 0 ? 'var(--danger)' : 'var(--success)';
+    }
+  }
+
+  updateDynamicState(state) {
+    if (!state) return;
+    document.querySelector('[data-dyn-steering]').textContent = `${state.steering.toFixed(1)}°`;
+    document.querySelector('[data-dyn-pitch]').textContent = `${state.pitch.toFixed(1)}°`;
+    document.querySelector('[data-dyn-roll]').textContent = `${state.roll.toFixed(1)}°`;
+    document.querySelector('[data-dyn-heave]').textContent = `${Math.round(state.heave)} mm`;
+    this.updateWheelMetrics(state.travel, state.loads);
+  }
+
+  updateStats(delta) {
+    this.statsTimer += delta;
+    if (this.statsTimer < .5) return;
+    this.statsTimer = 0;
+    const stats = this.qualityManager.getStats();
+    document.querySelector('[data-fps]').textContent = `${stats.fps || '--'} fps`;
+    document.querySelector('[data-fps-state]').textContent = stats.fps >= 50 ? 'Stable' : stats.fps >= 32 ? 'Acceptable' : 'Adaptive reduction';
+    document.querySelector('[data-draw-calls]').textContent = stats.calls.toLocaleString('en-US');
+    document.querySelector('[data-triangles]').textContent = stats.triangles.toLocaleString('en-US');
+    document.querySelector('[data-performance-label]').textContent = `${this.qualityManager.tier} · ${stats.fps || '--'} fps`;
+  }
+
+  updateComponent(component) {
+    document.querySelector('[data-component-label]').textContent = `${component.system} / ${component.name}`;
+    this.toast(component.name, component.description, 2800);
+  }
+
+  showPointerComponent(event) {
+    const hit = this.cameraController.pointerPick(event.clientX, event.clientY);
+    if (!hit?.component) {
+      this.tooltip.hidden = true;
+      return;
+    }
+    this.tooltip.hidden = false;
+    this.tooltip.textContent = hit.component.name;
+    this.tooltip.style.left = `${event.clientX}px`;
+    this.tooltip.style.top = `${event.clientY}px`;
+  }
+
+  toast(title, message, duration = 2400) {
+    const element = document.createElement('div');
+    element.className = 'toast';
+    element.innerHTML = `<strong></strong><span></span>`;
+    element.querySelector('strong').textContent = title;
+    element.querySelector('span').textContent = message;
+    this.toastStack.append(element);
+    setTimeout(() => element.remove(), duration);
+  }
+
+  async toggleFullscreen() {
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen();
+      else await document.documentElement.requestFullscreen();
+    } catch {
+      this.toast('Fullscreen unavailable', 'This browser did not allow the fullscreen request.');
+    }
+  }
+
+  dispose() {
+    this.chart.dispose();
+  }
+}

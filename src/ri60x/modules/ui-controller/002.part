@@ -1,0 +1,118 @@
+ortJSON(), 'application/json');
+    if (action === 'record-event') this.state.set('dynamics.recording', !this.state.get('dynamics.recording'), 'ui');
+    if (action === 'toggle-cfd-all') {
+      const allOn = Object.values(this.state.get('cfd.zones')).every(Boolean);
+      for (const zone of Object.keys(this.state.get('cfd.zones'))) this.state.set(`cfd.zones.${zone}`, !allOn, 'ui');
+    }
+  }
+
+  handleDock(dock) {
+    if (dock === 'vehicle') this.openWorkspace('control');
+    if (dock === 'diagnostics') this.openWorkspace('diagnostics');
+    if (dock === 'analysis') this.openWorkspace('analysis');
+  }
+
+  onStateChange({ path, value }) {
+    if (path === 'mode') this.syncMode(value);
+    if (path === 'cameraPreset') this.syncCamera(value);
+    if (path === 'lightPreset') this.syncLight(value);
+    if (path === 'quality') this.syncQuality(value);
+    if (path === 'autoOrbit') this.syncAutoOrbit(value);
+    if (path === 'compareLap') this.syncCompare(value);
+    if (path === 'playback.playing' || path === 'playback.speed' || path === 'playback.index') this.syncPlayback(path, value);
+    if (path.startsWith('cfd.')) this.syncCFD(path, value);
+    if (path === 'dynamics.event' || path === 'dynamics.recording') this.syncDynamics(path, value);
+  }
+
+  syncAll() {
+    this.syncMode(this.state.get('mode'));
+    this.syncCamera(this.state.get('cameraPreset'));
+    this.syncLight(this.state.get('lightPreset'));
+    this.syncQuality(this.state.get('quality'));
+    this.syncAutoOrbit(this.state.get('autoOrbit'));
+    this.syncCompare(this.state.get('compareLap'));
+    this.syncPlayback();
+    this.syncCFD();
+    this.syncDynamics();
+    this.updateTelemetry({ frame: this.telemetry.current, compare: this.telemetry.compareFrames[0], index: 0 });
+  }
+
+  syncMode(mode) {
+    document.documentElement.dataset.mode = mode;
+    this.all('[data-mode]').forEach((button) => button.classList.toggle('is-active', button.dataset.mode === mode));
+    document.querySelector('[data-view-label]').textContent = MODE_LABELS[mode] || mode;
+    document.querySelector('[data-panel-title]').textContent = MODE_LABELS[mode] || mode;
+    document.querySelector('[data-session-label]').textContent = `${MODE_LABELS[mode] || mode} session`;
+    document.querySelector('[data-cfd-controls]').hidden = mode !== 'cfd';
+    document.querySelector('[data-dynamics-controls]').hidden = mode !== 'dynamics';
+  }
+
+  syncCamera(name) {
+    this.all('[data-camera]').forEach((button) => button.classList.toggle('is-active', button.dataset.camera === name));
+  }
+
+  syncLight(name) {
+    this.all('[data-light]').forEach((button) => button.classList.toggle('is-active', button.dataset.light === name));
+    document.querySelector('[data-light-label]').textContent = LIGHT_LABELS[name] || name;
+  }
+
+  syncQuality() {
+    const preference = this.state.get('quality');
+    this.all('[data-quality]').forEach((button) => button.classList.toggle('is-active', button.dataset.quality === preference));
+    document.querySelector('[data-action="quality"]').textContent = this.qualityManager.tier.toUpperCase();
+    document.querySelector('[data-quality-tier]').textContent = this.qualityManager.tier[0].toUpperCase() + this.qualityManager.tier.slice(1);
+    document.querySelector('[data-device-class]').textContent = this.qualityManager.getStats().device;
+  }
+
+  syncAutoOrbit(enabled) {
+    document.querySelector('[data-action="auto-orbit"]')?.classList.toggle('is-active', enabled);
+  }
+
+  syncCompare(enabled) {
+    this.chart.setCompare(enabled);
+    document.querySelector('[data-action="compare-lap"]')?.classList.toggle('is-active', enabled);
+  }
+
+  syncPlayback(path, value) {
+    const playing = this.state.get('playback.playing');
+    const speed = this.state.get('playback.speed');
+    const index = this.state.get('playback.index');
+    document.querySelector('[data-play-icon]').textContent = playing ? 'Ⅱ' : '▶';
+    this.all('[data-playback]').forEach((button) => button.classList.toggle('is-active', Number(button.dataset.playback) === speed));
+    if (path === 'playback.index') this.telemetry.setIndex(index);
+    if (path === 'playback.playing') this.telemetry.setPlaying(value);
+    if (path === 'playback.speed') this.telemetry.setSpeed(value);
+  }
+
+  syncCFD(path, value) {
+    if (path === 'cfd.flowSpeed') this.overlayManager.setFlowSpeed(value);
+    if (path === 'cfd.vehicleSpeed') this.overlayManager.setVehicleSpeed(value);
+    if (path?.startsWith('cfd.zones.')) {
+      const zone = path.split('.').at(-1);
+      this.overlayManager.setZone(zone, value);
+      const input = document.querySelector(`[data-cfd-zone="${zone}"]`);
+      if (input) input.checked = value;
+    }
+    const speed = this.state.get('cfd.vehicleSpeed');
+    const front = Math.max(39, Math.min(51, 44.6 + (speed - 240) * .015));
+    const rear = 100 - front;
+    document.querySelector('[data-aero-front]').style.width = `${front}%`;
+    document.querySelector('[data-aero-rear]').style.width = `${rear}%`;
+    document.querySelector('[data-aero-balance]').textContent = `${front.toFixed(1)} / ${rear.toFixed(1)}`;
+  }
+
+  syncDynamics(path, value) {
+    const event = this.state.get('dynamics.event');
+    const recording = this.state.get('dynamics.recording');
+    this.all('[data-event]').forEach((button) => button.classList.toggle('is-active', button.dataset.event === event));
+    if (path === 'dynamics.event') this.overlayManager.setEvent(value);
+    if (path === 'dynamics.recording') this.overlayManager.setRecording(value);
+    document.querySelector('[data-action="record-event"]').textContent = recording ? 'Stop' : 'Record';
+    document.querySelector('[data-action="record-event"]').classList.toggle('is-active', recording);
+    document.querySelector('[data-event-label]').textContent = `${event[0].toUpperCase()}${event.slice(1)} state`;
+  }
+
+  openWorkspace(tab = 'control') {
+    this.workspace.hidden = false;
+    this.heroCopy.classList.add('is-hidden');
+    this.state.patch({ workspaceOpen: t

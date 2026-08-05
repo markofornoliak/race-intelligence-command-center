@@ -1,0 +1,26 @@
+  if (object.isMesh && object.visible) targets.push(object);
+    });
+    const hit = raycaster.intersectObjects(targets, false)[0];
+    if (!hit) return null;
+    let object = hit.object;
+    while (object && !object.userData.component && object.parent !== this.root) object = object.parent;
+    return { object: hit.object, component: object?.userData.component ?? hit.object.userData.component ?? { name: hit.object.name || 'Vehicle component', system: 'Vehicle', description: 'Authored vehicle geometry.' }, point: hit.point };
+  }
+
+  getBounds() {
+    return new THREE.Box3().setFromObject(this.root);
+  }
+
+  reset() {
+    this.assertAuthoredTransforms();
+    this.setDRS(0);
+    this.setThermal([320, 320, 320, 320]);
+  }
+
+  dispose() {
+    this.root.traverse((object) => {
+      if (object.geometry) object.geometry.dispose();
+    });
+    this.scene.remove(this.root);
+  }
+}

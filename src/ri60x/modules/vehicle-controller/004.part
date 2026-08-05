@@ -1,0 +1,133 @@
+tation.x = Math.PI / 2;
+      wheel.add(shadow(disc));
+      this.brakeDiscs.push(disc);
+      for (let hole = 0; hole < 20; hole += 1) {
+        const angle = (hole / 20) * Math.PI * 2;
+        const dot = new THREE.Mesh(new THREE.SphereGeometry(.012, 6, 4), M('dark'));
+        dot.position.set(Math.cos(angle) * .22, Math.sin(angle) * .22, key.endsWith('l') ? -.026 : .026);
+        wheel.add(dot);
+      }
+
+      const caliper = box(new THREE.Vector3(.12, .28, .09), M('caliper'), .035);
+      caliper.position.set(.21, .02, 0);
+      wheel.add(caliper);
+
+      const duct = new THREE.Mesh(new THREE.TorusGeometry(.31, .045, 10, 32, Math.PI * 1.35), M('carbonMatte'));
+      duct.rotation.z = key.startsWith('f') ? .2 : -.2;
+      duct.position.z = key.endsWith('l') ? .12 : -.12;
+      wheel.add(shadow(duct));
+
+      const side = key.endsWith('l') ? -1 : 1;
+      const front = key.startsWith('f');
+      const uprightWorld = position.clone().add(new THREE.Vector3(front ? .03 : -.03, .02, -side * .2));
+      const chassisX = front ? -1.55 : 1.35;
+      const upperA = new THREE.Vector3(chassisX, .82, side * .42);
+      const upperB = new THREE.Vector3(chassisX + (front ? .38 : -.35), .78, side * .42);
+      const lowerA = new THREE.Vector3(chassisX - (front ? .12 : -.08), .2, side * .58);
+      const lowerB = new THREE.Vector3(chassisX + (front ? .42 : -.42), .22, side * .56);
+      const localUpright = uprightWorld.clone();
+      const upright = cylinderBetween(localUpright.clone().add(new THREE.Vector3(0, -.24, 0)), localUpright.clone().add(new THREE.Vector3(0, .24, 0)), .055, M('titanium'));
+      this.root.add(upright);
+      const armRadius = .024;
+      this.root.add(cylinderBetween(upperA, localUpright.clone().add(new THREE.Vector3(0, .18, 0)), armRadius, M('carbon')));
+      this.root.add(cylinderBetween(upperB, localUpright.clone().add(new THREE.Vector3(0, .18, 0)), armRadius, M('carbon')));
+      this.root.add(cylinderBetween(lowerA, localUpright.clone().add(new THREE.Vector3(0, -.18, 0)), armRadius, M('carbon')));
+      this.root.add(cylinderBetween(lowerB, localUpright.clone().add(new THREE.Vector3(0, -.18, 0)), armRadius, M('carbon')));
+      const pushrodEnd = new THREE.Vector3(front ? -1.35 : 1.15, 1.02, side * .22);
+      this.root.add(cylinderBetween(localUpright.clone().add(new THREE.Vector3(0, .08, 0)), pushrodEnd, .022, M('titanium')));
+      const damperEnd = new THREE.Vector3(front ? -.92 : .95, .86, side * .12);
+      this.root.add(cylinderBetween(pushrodEnd, damperEnd, .045, M('aluminium')));
+      this.root.add(cylinderBetween(pushrodEnd.clone().add(new THREE.Vector3(.02, 0, 0)), damperEnd.clone().add(new THREE.Vector3(.02, 0, 0)), .018, M('accent')));
+    }
+  }
+
+  buildDetailing() {
+    const M = (name) => this.materials.get(name);
+    const airbox = new THREE.Mesh(new THREE.TorusGeometry(.2, .055, 10, 28, Math.PI * 1.55), M('dark'));
+    airbox.rotation.set(0, Math.PI / 2, Math.PI / 2);
+    airbox.position.set(.52, 1.22, 0);
+    this.add(shadow(airbox));
+
+    const cameraStem = cylinderBetween(new THREE.Vector3(-.55, 1.18, 0), new THREE.Vector3(-.72, 1.32, 0), .025, M('titanium'));
+    this.add(cameraStem);
+    const camera = box(new THREE.Vector3(.16, .09, .12), M('carbon'), .04);
+    camera.position.set(-.75, 1.33, 0);
+    this.add(camera);
+
+    const rainLight = box(new THREE.Vector3(.05, .12, .16), M('emissiveRed'), .025);
+    rainLight.position.set(2.5, .45, 0);
+    this.add(rainLight);
+
+    for (const side of [-1, 1]) {
+      const coolingExit = box(new THREE.Vector3(.52, .025, .3), M('dark'), .02);
+      coolingExit.position.set(1.25, .65, side * .33);
+      coolingExit.rotation.set(side * .18, 0, -.14);
+      this.add(coolingExit);
+      for (let slot = 0; slot < 5; slot += 1) {
+        const louvre = box(new THREE.Vector3(.22, .018, .014), M('titanium'), .004);
+        louvre.position.set(.92 + slot * .075, .82 - slot * .02, side * .42);
+        louvre.rotation.set(side * .1, 0, -.18);
+        this.add(louvre);
+      }
+    }
+  }
+
+  lockAuthoredTransforms() {
+    this.root.traverse((object) => {
+      if (!object.isObject3D) return;
+      this.originalTransforms.set(object.uuid, {
+        position: object.position.clone(),
+        quaternion: object.quaternion.clone(),
+        scale: object.scale.clone(),
+        visible: object.visible
+      });
+    });
+  }
+
+  assertAuthoredTransforms() {
+    let restored = 0;
+    this.root.traverse((object) => {
+      const original = this.originalTransforms.get(object.uuid);
+      if (!original) return;
+      if (!object.position.equals(original.position) || !object.quaternion.equals(original.quaternion) || !object.scale.equals(original.scale)) {
+        object.position.copy(original.position);
+        object.quaternion.copy(original.quaternion);
+        object.scale.copy(original.scale);
+        restored += 1;
+      }
+    });
+    return restored;
+  }
+
+  setMode(mode) {
+    this.materials.setMode(mode);
+    for (const component of this.components) {
+      if (!component.material) continue;
+      component.userData.originalMaterial ??= component.material;
+      if (mode === 'technical') {
+        component.material = component.userData.originalMaterial;
+        component.material.wireframe = false;
+      } else {
+        component.material = component.userData.originalMaterial;
+      }
+    }
+  }
+
+  setThermal(values) {
+    this.brakeDiscs.forEach((disc, index) => {
+      const temp = values[index] ?? 450;
+      disc.material.emissive ??= new THREE.Color();
+      disc.material.emissive.setHSL(.03, .95, THREE.MathUtils.clamp((temp - 300) / 1200, 0, .42));
+      disc.material.emissiveIntensity = THREE.MathUtils.clamp((temp - 350) / 450, 0, 2.2);
+    });
+  }
+
+  setDRS(openAmount) {
+    if (!this.drsFlap) return;
+    this.drsFlap.rotation.z = THREE.MathUtils.lerp(this.drsFlap.userData.closedAngle, this.drsFlap.userData.openAngle, openAmount);
+  }
+
+  pick(raycaster) {
+    const targets = [];
+    this.root.traverse((object) => {
+    

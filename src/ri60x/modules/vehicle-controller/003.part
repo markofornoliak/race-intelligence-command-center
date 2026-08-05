@@ -1,0 +1,132 @@
+left, right);
+    const rearBar = new THREE.Mesh(new THREE.TorusGeometry(.4, .043, 10, 36, Math.PI * 1.1), M('titanium'));
+    rearBar.rotation.set(Math.PI / 2, 0, Math.PI * .45);
+    rearBar.position.set(.35, 1.08, 0);
+    halo.add(shadow(rearBar));
+    this.add(named(halo, 'Halo', 'Safety', 'Titanium frontal protection structure with chassis-integrated mounting points.'));
+    this.components.push(halo);
+
+    for (const side of [-1, 1]) {
+      const stalk = cylinderBetween(new THREE.Vector3(-.35, .94, side * .35), new THREE.Vector3(-.5, 1.02, side * .66), .022, M('carbon'));
+      this.add(stalk);
+      const mirror = named(box(new THREE.Vector3(.22, .12, .08), M('paint'), .045), side < 0 ? 'Left mirror' : 'Right mirror', 'Driver visibility', 'Aerodynamic mirror shell and camera mount.');
+      mirror.position.set(-.52, 1.03, side * .7);
+      this.add(mirror);
+      const glass = box(new THREE.Vector3(.18, .085, .009), M('glass'), .025);
+      glass.position.set(-.535, 1.03, side * (.741));
+      this.add(glass);
+    }
+  }
+
+  buildRearWing() {
+    const M = (name) => this.materials.get(name);
+    const wing = new THREE.Group();
+    wing.name = 'REAR_WING_ASSEMBLY';
+    wing.position.set(2.55, .96, 0);
+    this.add(wing);
+
+    for (const side of [-1, 1]) {
+      const endplate = box(new THREE.Vector3(.62, .92, .045), M('carbon'), .018);
+      endplate.position.set(0, .3, side * .78);
+      wing.add(endplate);
+      const swan = cylinderBetween(new THREE.Vector3(-.12, -.25, side * .23), new THREE.Vector3(.08, .16, side * .36), .035, M('titanium'));
+      wing.add(swan);
+    }
+    const beam = named(box(new THREE.Vector3(.42, .065, 1.42), M('carbon'), .022), 'Beam wing', 'Aerodynamics', 'Lower rear-wing element coupling diffuser extraction and rear load.');
+    beam.position.set(-.08, -.18, 0);
+    beam.rotation.z = .07;
+    wing.add(beam);
+    this.components.push(beam);
+
+    const main = named(box(new THREE.Vector3(.48, .085, 1.58), M('carbon'), .03), 'Rear wing mainplane', 'Aerodynamics', 'High-load rear aerodynamic surface.');
+    main.position.set(0, .44, 0);
+    main.rotation.z = -.11;
+    wing.add(main);
+    this.components.push(main);
+
+    this.drsFlap = box(new THREE.Vector3(.34, .055, 1.5), M('accent'), .02);
+    this.drsFlap.position.set(-.04, .68, 0);
+    this.drsFlap.rotation.z = -.08;
+    this.drsFlap.userData.closedAngle = -.08;
+    this.drsFlap.userData.openAngle = -.42;
+    wing.add(this.drsFlap);
+
+    const actuator = cylinderBetween(new THREE.Vector3(.08, .54, 0), new THREE.Vector3(.12, .71, 0), .018, M('aluminium'));
+    wing.add(actuator);
+  }
+
+  buildDiffuser() {
+    const M = (name) => this.materials.get(name);
+    const diffuser = new THREE.Group();
+    diffuser.name = 'DIFFUSER';
+    diffuser.position.set(2.05, .02, 0);
+    this.add(diffuser);
+
+    for (let lane = -3; lane <= 3; lane += 1) {
+      const channel = box(new THREE.Vector3(.82, .06 + Math.abs(lane) * .009, .18), M('carbonMatte'), .015);
+      channel.position.set(.2, .10 + Math.abs(lane) * .01, lane * .205);
+      channel.rotation.z = THREE.MathUtils.degToRad(-11 - Math.abs(lane) * .7);
+      diffuser.add(channel);
+      if (lane < 3) {
+        const strake = box(new THREE.Vector3(.7, .25, .018), M('carbon'), .006);
+        strake.position.set(.22, .18, (lane + .5) * .205);
+        strake.rotation.z = THREE.MathUtils.degToRad(-9);
+        diffuser.add(strake);
+      }
+    }
+    const kick = named(box(new THREE.Vector3(.78, .035, 1.5), M('carbon'), .015), 'Diffuser', 'Aerodynamics', 'Multi-channel rear diffuser accelerating floor extraction.');
+    kick.position.set(.32, .28, 0);
+    kick.rotation.z = THREE.MathUtils.degToRad(-14);
+    diffuser.add(kick);
+    this.components.push(kick);
+  }
+
+  buildWheelsAndSuspension() {
+    const M = (name) => this.materials.get(name);
+    const positions = {
+      fl: new THREE.Vector3(FRONT_X, WHEEL_RADIUS, -HALF_TRACK),
+      fr: new THREE.Vector3(FRONT_X, WHEEL_RADIUS, HALF_TRACK),
+      rl: new THREE.Vector3(REAR_X, WHEEL_RADIUS, -HALF_TRACK),
+      rr: new THREE.Vector3(REAR_X, WHEEL_RADIUS, HALF_TRACK)
+    };
+
+    for (const [key, position] of Object.entries(positions)) {
+      const wheel = new THREE.Group();
+      wheel.name = `WHEEL_${key.toUpperCase()}`;
+      wheel.position.copy(position);
+      this.root.add(wheel);
+      this.wheels[key] = wheel;
+
+      const tyre = named(new THREE.Mesh(new THREE.CylinderGeometry(WHEEL_RADIUS, WHEEL_RADIUS, .38, this.qualityManager.tier === 'mobile' ? 28 : 48, 1, false), M('rubber')), `${key.toUpperCase()} tyre`, 'Tyres', '18-inch racing tyre with load-dependent contact patch.');
+      tyre.rotation.x = Math.PI / 2;
+      tyre.scale.set(1, 1, .96);
+      shadow(tyre);
+      wheel.add(tyre);
+      this.components.push(tyre);
+
+      const sidewallOuter = new THREE.Mesh(new THREE.TorusGeometry(.47, .055, 12, 40), M('rubber'));
+      sidewallOuter.position.z = key.endsWith('l') ? -.205 : .205;
+      wheel.add(shadow(sidewallOuter));
+
+      const rim = new THREE.Mesh(new THREE.CylinderGeometry(.39, .39, .33, 32, 1, false), M('magnesium'));
+      rim.rotation.x = Math.PI / 2;
+      wheel.add(shadow(rim));
+
+      const hub = new THREE.Mesh(new THREE.CylinderGeometry(.11, .11, .42, 24), M('aluminium'));
+      hub.rotation.x = Math.PI / 2;
+      wheel.add(shadow(hub));
+
+      const nut = new THREE.Mesh(new THREE.CylinderGeometry(.065, .065, .44, 12), key.endsWith('l') ? M('accent') : M('titanium'));
+      nut.rotation.x = Math.PI / 2;
+      wheel.add(shadow(nut));
+
+      for (let spoke = 0; spoke < 12; spoke += 1) {
+        const angle = (spoke / 12) * Math.PI * 2;
+        const spokeMesh = box(new THREE.Vector3(.035, .29, .025), M('aluminium'), .008);
+        spokeMesh.position.set(Math.cos(angle) * .19, Math.sin(angle) * .19, 0);
+        spokeMesh.rotation.z = angle - Math.PI / 2;
+        wheel.add(spokeMesh);
+      }
+
+      const disc = new THREE.Mesh(new THREE.CylinderGeometry(.29, .29, .045, 40), M('brake'));
+      disc.ro

@@ -1,28 +1,23 @@
-import http from 'node:http';
-import { readFile } from 'node:fs/promises';
+import { createReadStream } from 'node:fs';
+import { stat } from 'node:fs/promises';
+import { createServer } from 'node:http';
 import { extname, join, normalize } from 'node:path';
 
-const port = 4173;
-const root = process.cwd();
-const contentTypes = {
-  '.html': 'text/html; charset=utf-8',
-  '.css': 'text/css; charset=utf-8',
-  '.js': 'application/javascript; charset=utf-8',
-  '.svg': 'image/svg+xml'
-};
+const root = new URL('./dist/', import.meta.url).pathname;
+const port = Number(process.env.PORT || 4173);
+const mime = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.svg': 'image/svg+xml', '.webmanifest': 'application/manifest+json' };
 
-http.createServer(async (request, response) => {
+createServer(async (request, response) => {
   try {
-    const requestPath = request.url === '/' ? '/index.html' : request.url.split('?')[0];
-    const safePath = normalize(decodeURIComponent(requestPath)).replace(/^\.\.(\/|\\)/, '');
-    const filePath = join(root, safePath);
-    const file = await readFile(filePath);
-    response.writeHead(200, { 'Content-Type': contentTypes[extname(filePath)] || 'application/octet-stream' });
-    response.end(file);
-  } catch {
-    response.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
-    response.end('Not found');
+    const pathname = decodeURIComponent(new URL(request.url, `http://${request.headers.host}`).pathname);
+    const safe = normalize(pathname).replace(/^([.][.][/\\])+/, '');
+    let file = join(root, safe === '/' ? 'index.html' : safe);
+    const info = await stat(file).catch(() => null);
+    if (!info || info.isDirectory()) file = join(root, 'index.html');
+    response.writeHead(200, { 'content-type': mime[extname(file)] || 'application/octet-stream', 'cache-control': 'no-store' });
+    createReadStream(file).pipe(response);
+  } catch (error) {
+    response.writeHead(500, { 'content-type': 'text/plain' });
+    response.end(String(error));
   }
-}).listen(port, () => {
-  console.log(`Race Intelligence running at http://localhost:${port}`);
-});
+}).listen(port, '127.0.0.1', () => console.log(`RI-60X preview: http://127.0.0.1:${port}`));
