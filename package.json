@@ -1,12 +1,18 @@
 {
   "name": "race-intelligence-command-center",
-  "version": "51.1.0",
+  "version": "60.0.0",
   "private": true,
   "type": "module",
   "scripts": {
     "start": "npm run build && node server.mjs",
+    "preview": "npm run build && node server.mjs",
     "test": "node scripts/check.mjs",
+    "test:browser": "playwright test",
     "build": "node scripts/build.mjs",
     "validate": "npm test && npm run build"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "pngjs": "^7.0.0"
   }
 }
