@@ -272,7 +272,6 @@
         const progress=(seed.phase+time*flowSpeed)%1;
         const x=-8.2+progress*17.2;
         const side=seed.lane/15.5;
-        const absX=Math.abs(x);
         const noseInfluence=Math.exp(-Math.pow((x+3.7)*.7,2));
         const bodyInfluence=Math.exp(-Math.pow(x*.34,2));
         const floorInfluence=Math.exp(-Math.pow((x-.2)*.26,2));
