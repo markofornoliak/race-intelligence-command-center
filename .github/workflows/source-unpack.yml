@@ -27,10 +27,10 @@ jobs:
           tar -xJf /tmp/ri60x-source.tar.xz
       - name: Validate materialized source
         run: npm test && npm run build
-      - name: Publish readable source tree
+      - name: Publish source without workflow mutations
         run: |
           rm -rf .bootstrap/chunks
-          rm -f .github/workflows/source-unpack.yml
+          git restore .github/workflows
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
