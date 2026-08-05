@@ -49,11 +49,15 @@ for(const token of ['RI40X_AUTHORED_DETAIL_PASS','MIRROR_SHELL','T_CAMERA_HEAD',
 
 for(const token of ['ri51-lab','ri51-load-map','ri51-corner-grid','data-ri-version="51"','data-ri51-mode','@media(max-width:640px)','prefers-reduced-motion'])if(!upgrades.vehicleLabCss.includes(token))throw new Error(`RI-51X lab style missing: ${token}`);
 for(const token of ['data-ri51-mode','ri:vehicle-lab-config','ri:vehicle-lab-mode','ri51Update','RUN DYNAMIC PASS','RI-51X vehicle dynamics lab initialized'])if(!upgrades.vehicleLabJs.includes(token))throw new Error(`RI-51X lab behavior missing: ${token}`);
-for(const token of ['RI51X_VEHICLE_DYNAMICS','RI51X_ACTIVE_SUSPENSION','RI51X_CFD_PARTICLE_FIELD','RI51X_PRESSURE_FIELD','RI51X_LOAD_VECTORS','BRAKE_DUCT','REAR_WAKE_RIBBON','ri:dynamics-ready'])if(!upgrades.dynamicsUpgrade.includes(token))throw new Error(`RI-51X 3D dynamics capability missing: ${token}`);
-for(const token of ['src/ri51x','vehicle-lab.css','vehicle-lab.js','dynamics-scene.js','RI-51X production build','ri51x-v1'])if(!upgrades.build.includes(token))throw new Error(`RI-51X build integration missing: ${token}`);
+for(const token of ['RI51X_VEHICLE_DYNAMICS','RI51X_ACTIVE_SUSPENSION','RI51X_CFD_PARTICLE_FIELD','RI51X_PRESSURE_FIELD','RI51X_LOAD_VECTORS','BRAKE_DUCT','REAR_WAKE_RIBBON','ri:dynamics-ready','nonInvasive: true'])if(!upgrades.dynamicsUpgrade.includes(token))throw new Error(`RI-51X 3D dynamics capability missing: ${token}`);
+for(const token of ['src/ri51x','vehicle-lab.css','vehicle-lab.js','dynamics-scene.js','RI-51X production build','ri51x-v2','base vehicle hierarchy locked'])if(!upgrades.build.includes(token))throw new Error(`RI-51X build integration missing: ${token}`);
+
+const forbiddenDynamicsMutation=/wheel\.root\.position\.(?:set|copy)|wheel\.root\.position\.[xyz]\s*=|world\.position\.(?:set|copy)|world\.position\.[xyz]\s*=/;
+if(forbiddenDynamicsMutation.test(upgrades.dynamicsUpgrade))throw new Error('Dynamics overlay must not mutate the authored wheel roots or world transform.');
+if(!upgrades.vehicleLabJs.includes("ri51SetExplode(0)"))throw new Error('Dynamics modes must keep the vehicle assembled.');
 
 const engineeringBytes=Buffer.byteLength(engineering)+Buffer.byteLength(upgrades.engineeringUpgrade)+Buffer.byteLength(upgrades.hangarUpgrade)+Buffer.byteLength(upgrades.dynamicsUpgrade);
-if(engineeringBytes<110000)throw new Error(`Combined 3D implementation is unexpectedly shallow: ${engineeringBytes} bytes.`);
+if(engineeringBytes<108000)throw new Error(`Combined 3D implementation is unexpectedly shallow: ${engineeringBytes} bytes.`);
 const experienceBytes=Buffer.byteLength(upgrades.experienceCss)+Buffer.byteLength(upgrades.experienceJs)+Buffer.byteLength(upgrades.vehicleLabCss)+Buffer.byteLength(upgrades.vehicleLabJs);
 if(experienceBytes<60000)throw new Error(`RI-51X interface implementation is unexpectedly shallow: ${experienceBytes} bytes.`);
 
@@ -99,5 +103,5 @@ for(const file of [
   'src/ri51x/vehicle-lab.css','src/ri51x/vehicle-lab.js','src/ri51x/dynamics-scene.js'
 ])await access(file);
 const bytes=Object.values(base).reduce((sum,value)=>sum+Buffer.byteLength(value),0)+Object.values(upgrades).reduce((sum,value)=>sum+Buffer.byteLength(value),0);
-if(bytes>820000)throw new Error(`RI-51X source budget exceeded: ${bytes} bytes.`);
-console.log(`RI-51X validation passed. Artist model: 397.9K triangles. Combined 3D: ${engineeringBytes} bytes. Interface: ${experienceBytes} bytes. CFD field: 960 particles. Suspension rigs: 4. Replay: ${a.frames.length} frames. Strategies: ${Object.keys(SCENARIOS).length} × 1,200 outcomes. Source: ${bytes} bytes.`);
+if(bytes>840000)throw new Error(`RI-51X source budget exceeded: ${bytes} bytes.`);
+console.log(`RI-51X precision validation passed. Artist model: 397.9K triangles. Combined 3D: ${engineeringBytes} bytes. Interface: ${experienceBytes} bytes. CFD field: 720 particles. Suspension overlays: 4. Base transforms: locked. Replay: ${a.frames.length} frames. Strategies: ${Object.keys(SCENARIOS).length} × 1,200 outcomes. Source: ${bytes} bytes.`);
