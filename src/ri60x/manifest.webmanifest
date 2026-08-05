@@ -1,0 +1,13 @@
+{
+  "name": "Race Intelligence Command Center",
+  "short_name": "RI-60X",
+  "description": "Formula vehicle engineering digital twin, CFD visualization, dynamics and telemetry workspace.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#080b0f",
+  "theme_color": "#080b0f",
+  "icons": [
+    { "src": "assets/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
