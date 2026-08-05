@@ -4,4 +4,7 @@ styles.css
 app.js
 scene.js
 core.mjs
+visuals.js
+manifest.webmanifest
+sw.js
 .DS_Store

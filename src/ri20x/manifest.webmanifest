@@ -1,0 +1,12 @@
+{
+  "name": "Race Intelligence OS — RI-20X",
+  "short_name": "RI-20X",
+  "description": "Interactive Formula 1 digital twin, telemetry replay and race strategy command environment.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#04070b",
+  "theme_color": "#05070b",
+  "icons": [
+    { "src": "assets/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
