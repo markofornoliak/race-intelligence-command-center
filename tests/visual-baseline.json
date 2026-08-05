@@ -1,0 +1,6 @@
+{
+  "desktop": { "width": 1440, "height": 900, "maxChangedPixelRatio": 0.035 },
+  "mobile": { "width": 393, "height": 852, "maxChangedPixelRatio": 0.05 },
+  "performanceBudgetBytes": 950000,
+  "minimumCanvasWidth": 300
+}
