@@ -53,7 +53,7 @@ for (const token of [
 ]) {
   if (!scene.includes(token)) throw new Error(`RI-30X digital-twin capability missing: ${token}`);
 }
-for (const token of ['hole < 24','spoke < 14','fin < 15','button < 10','lane = -8','new THREE.PCFSoftShadowMap']) {
+for (const token of ['hole < 24','spoke < 14','fin < 15','button < 10','lane = -8','shadowMap.type = THREE.PCFSoftShadowMap']) {
   if (!scene.includes(token)) throw new Error(`RI-30X model-depth gate missing: ${token}`);
 }
 const sceneBytes = Buffer.byteLength(scene);
