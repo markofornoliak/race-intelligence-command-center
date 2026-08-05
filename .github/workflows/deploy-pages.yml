@@ -20,21 +20,18 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
           node-version: 24
-
-      - name: Validate project
+      - name: Validate source
         run: npm test
-
       - name: Build static site
         run: npm run build
-
+      - name: Verify performance budget
+        run: test "$(du -sb dist | cut -f1)" -lt 1000000
       - name: Configure Pages
         uses: actions/configure-pages@v5
-
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
@@ -50,3 +47,7 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+      - name: Published-site smoke test
+        run: |
+          sleep 8
+          curl --fail --silent --show-error --retry 6 --retry-delay 5 "${{ steps.deployment.outputs.page_url }}" | grep -q "RI-60X"
