@@ -39,7 +39,7 @@ const [
 const index=indexSource
   .replaceAll('RI–20X','RI–51X')
   .replaceAll('RI-20X','RI-51X')
-  .replace('</head>','  <meta name="application-version" content="RI-51X" />\n</head>')
+  .replace('</head>','  <meta name="application-version" content="RI-51X Precision" />\n</head>')
   .replace('</body>','  <script type="module" src="experience.js"></script>\n  <script type="module" src="vehicle-lab.js"></script>\n</body>');
 
 const styles=`${stylesSource.trim()}\n\n${readabilityCss.trim()}\n\n${experienceCss.trim()}\n\n${vehicleLabCss.trim()}\n`;
@@ -51,7 +51,7 @@ const manifest=manifestSource
   .replaceAll('RI-20X','RI-51X')
   .replaceAll('RI–20X','RI–51X');
 const serviceWorker=serviceWorkerSource
-  .replace(/const CACHE='[^']+';/,"const CACHE='ri51x-v1';")
+  .replace(/const CACHE='[^']+';/,"const CACHE='ri51x-v2';")
   .replace("'./scene.js','./engineering-scene.js'","'./scene.js','./engineering-scene.js','./experience.js','./vehicle-lab.js'")
   .replaceAll('RI-20X','RI-51X');
 
@@ -77,5 +77,6 @@ await cp('assets/favicon.svg','dist/assets/favicon.svg');
 const interfaceBytes=Buffer.byteLength(experienceCss)+Buffer.byteLength(experienceJs)+Buffer.byteLength(vehicleLabCss)+Buffer.byteLength(vehicleLabJs);
 const threeDBytes=Buffer.byteLength(engineeringUpgrade)+Buffer.byteLength(hangarUpgrade)+Buffer.byteLength(dynamicsUpgrade);
 console.log(`RI-51X production build complete: ${generated.size} application files written to root and dist/.`);
+console.log('Precision revision: base vehicle hierarchy locked; dynamic overlays are non-invasive.');
 console.log(`Interface system: ${interfaceBytes} bytes.`);
 console.log(`3D upgrades: ${threeDBytes} bytes.`);
