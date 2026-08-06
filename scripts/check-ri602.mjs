@@ -6,7 +6,7 @@ async function readParts(directory) {
   return (await Promise.all(names.map((name) => readFile(join(directory, name), 'utf8')))).join('');
 }
 
-const [vehicle, overlays, ui, styles, camera, materials, scene, app, fallback, serviceWorker, packageSource] = await Promise.all([
+const [vehicle, overlays, ui, styles, camera, materials, scene, app, fallback, serviceWorker, packageSource, browserTests] = await Promise.all([
   readParts('src/ri60x/modules/vehicle-controller'),
   readParts('src/ri60x/modules/overlay-manager'),
   readParts('src/ri60x/modules/ui-controller'),
@@ -17,7 +17,8 @@ const [vehicle, overlays, ui, styles, camera, materials, scene, app, fallback, s
   readFile('src/ri60x/app.js', 'utf8'),
   readFile('src/ri60x/modules/fallback-ui.js', 'utf8'),
   readFile('src/ri60x/sw.js', 'utf8'),
-  readFile('package.json', 'utf8')
+  readFile('package.json', 'utf8'),
+  readFile('tests/command-center.spec.js', 'utf8')
 ]);
 
 const requireTokens = (name, source, tokens) => {
@@ -28,7 +29,8 @@ const requireTokens = (name, source, tokens) => {
 
 requireTokens('connected suspension', vehicle, [
   'CORNER_ASSEMBLY_', 'UPRIGHT_', 'coilSpringBetween', 'antiRollLinkEnd',
-  'InstancedMesh', 'BRAKE_DUCT_', 'independentThermalMaterial'
+  'InstancedMesh', 'BRAKE_DUCT_', 'independentThermalMaterial',
+  'validateAuthoredTransforms', 'visibilityChanged'
 ]);
 requireTokens('analytic dynamics', overlays, [
   'ANALYTIC_CHASSIS_REFERENCE', 'ANALYTIC_WHEEL_MARKER_',
@@ -44,9 +46,9 @@ requireTokens('deterministic PBR', materials, [
 ]);
 if (materials.includes('Math.random')) throw new Error('Materials must not use non-deterministic Math.random.');
 requireTokens('neutral lighting', scene, [
-  'RectAreaLight', 'Neutral', 'contactShadow', 'ACES',
-  'environmentTexture', 'this.platformRing', 'maxblur: .003'
-].filter((token) => token !== 'Neutral' && token !== 'ACES'));
+  'RectAreaLight', 'contactShadow', 'environmentTexture',
+  'this.platformRing', 'maxblur: .003', 'toneMappingExposure'
+]);
 requireTokens('mobile bottom sheet', styles, [
   'native mobile workspace', '100dvh', 'ri60x-sheet-in',
   'env(safe-area-inset-bottom)', 'overflow:visible', 'min-height:44px'
@@ -57,7 +59,14 @@ requireTokens('UI lifecycle', ui, [
 ]);
 requireTokens('fallback runtime', fallback, ['Lightweight', 'telemetryFrames', 'openWorkspace', 'exportCSV', 'exportJSON']);
 requireTokens('cache invalidation', serviceWorker, ['ri60x-unified-v3', 'networkFirst', 'skipWaiting', 'clients.claim']);
-requireTokens('runtime integration', app, ["version: '60.2.0'", 'cameraController.setMode(value)', 'initializeFallback']);
+requireTokens('runtime integration', app, [
+  "version: '60.2.0'", 'cameraController.setMode(value)', 'initializeFallback',
+  'authoredViolations: vehicle.validateAuthoredTransforms()', 'cameraMode:', 'cameraPreset:'
+]);
+requireTokens('browser quality', browserTests, [
+  'authoredViolations', 'lightweight runtime remains functional without WebGL2',
+  'iPhone workspace is a bottom sheet', 'WebGL2RenderingContext', 'cameraMode', 'cameraPreset'
+]);
 if (JSON.parse(packageSource).version !== '60.2.0') throw new Error('Package version must be 60.2.0.');
 
-console.log('RI-60X 60.2 regression guards passed: connected corners, safe cameras, deterministic PBR, neutral lighting, mobile bottom sheet and abortable lifecycle.');
+console.log('RI-60X 60.2 regression guards passed: connected corners, authored hierarchy audit, safe cameras, deterministic PBR, neutral lighting, mobile bottom sheet, functional WebGL fallback and abortable lifecycle.');
