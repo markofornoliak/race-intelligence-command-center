@@ -13,7 +13,7 @@ const required = [
   'index.html', 'bootstrap.js', 'app.js', 'manifest.webmanifest', 'sw.js',
   'modules/state-manager.js', 'modules/asset-manager.js', 'modules/quality-manager.js',
   'modules/scene-runtime.js', 'modules/material-factory.js', 'modules/camera-controller.js',
-  'modules/telemetry-engine.js', 'modules/chart-renderer.js', 'modules/utils.js'
+  'modules/telemetry-engine.js', 'modules/chart-renderer.js', 'modules/fallback-ui.js', 'modules/utils.js'
 ];
 
 async function readParts(directory) {
@@ -37,4 +37,4 @@ await writeFile(join(outputRoot, '.nojekyll'), '');
 const index = await readFile(join(outputRoot, 'index.html'), 'utf8');
 if (!index.includes('RI-60X') || !index.includes('Enter Command Center')) throw new Error('RI-60X entry surface is incomplete.');
 console.log(`RI-60X unified production build complete: ${required.length + assembled.size} application files plus assets written to ${outputRoot}/.`);
-console.log('Architecture: one source root, explicit runtime modules, immutable authored vehicle hierarchy, lazy analytic overlays.');
+console.log('Architecture: one source root, explicit runtime modules, immutable authored vehicle hierarchy, lazy analytic overlays, functional WebGL fallback.');
