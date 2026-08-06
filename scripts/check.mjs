@@ -32,6 +32,9 @@ const overlays = joinParts('modules/overlay-manager');
 const ui = joinParts('modules/ui-controller');
 const camera = source['modules/camera-controller.js'];
 const quality = source['modules/quality-manager.js'];
+const materials = source['modules/material-factory.js'];
+const fallback = source['modules/fallback-ui.js'];
+const serviceWorker = source['sw.js'];
 const telemetrySource = source['modules/telemetry-engine.js'];
 
 for (const token of ['RI-60X / UNIFIED VEHICLE RUNTIME', 'Enter Command Center', 'data-mode="studio"', 'data-mode="cfd"', 'data-mode="dynamics"', 'data-camera="cockpit"', 'data-camera="floor"', 'data-action="export-csv"', 'data-action="export-json"']) {
@@ -41,9 +44,13 @@ if ((html.match(/<h1/g) || []).length !== 1) throw new Error('Exactly one primar
 for (const token of ['viewport-fit=cover', 'aria-label', '<dialog', 'safe-area-inset-bottom']) if (!(html + css).includes(token)) throw new Error(`Accessibility/mobile token missing: ${token}`);
 for (const token of ['@media(max-width:760px)', '@media(max-width:480px)', 'orientation:landscape', 'prefers-reduced-motion', ':focus-visible']) if (!css.includes(token)) throw new Error(`Responsive rule missing: ${token}`);
 
-for (const token of ['class VehicleController', 'FRONT_WING_ASSEMBLY', 'REAR_WING_ASSEMBLY', 'DIFFUSER', 'HALO_ASSEMBLY', 'Ground-effect floor', 'brakeDiscs', 'assertAuthoredTransforms', 'lockAuthoredTransforms']) if (!vehicle.includes(token)) throw new Error(`Vehicle system missing: ${token}`);
+for (const token of ['class VehicleController', 'FRONT_WING_ASSEMBLY', 'REAR_WING_ASSEMBLY', 'DIFFUSER', 'HALO_ASSEMBLY', 'Ground-effect floor', 'brakeDiscs', 'assertAuthoredTransforms', 'lockAuthoredTransforms', 'CORNER_ASSEMBLY_', 'UPRIGHT_', 'coilSpringBetween', 'InstancedMesh', 'independentThermalMaterial']) if (!vehicle.includes(token)) throw new Error(`Vehicle system missing: ${token}`);
 for (const token of ['class OverlayManager', 'frontWing', 'tyres', 'floor', 'diffuser', 'CatmullRomCurve3', 'ArrowHelper', 'ANALYTIC_VEHICLE_FRAME', 'setZone', 'setRecording']) if (!overlays.includes(token)) throw new Error(`Overlay system missing: ${token}`);
-for (const token of ['class CameraController', 'cockpit', 'suspension', 'floor', 'minDistance', 'maxDistance', 'dblclick', 'startCinematic', 'localStorage']) if (!camera.includes(token)) throw new Error(`Camera system missing: ${token}`);
+for (const token of ['class CameraController', 'cockpit', 'suspension', 'floor', 'minDistance', 'maxDistance', 'dblclick', 'startCinematic', 'ri60x-camera-modes', 'setMode(mode)', 'enforceSafeCamera', 'TOUCH.DOLLY_ROTATE']) if (!camera.includes(token)) throw new Error(`Camera system missing: ${token}`);
+for (const token of ['seededRandom', 'carbonNormal', 'roughnessMap', 'NoColorSpace', 'anisotropy', 'clone(name']) if (!materials.includes(token)) throw new Error(`PBR material capability missing: ${token}`);
+if (materials.includes('Math.random')) throw new Error('PBR material generation must be deterministic.');
+for (const token of ['class FallbackUI', 'telemetryFrames', 'exportCSV', 'exportJSON', 'openWorkspace', 'visibilitychange']) if (!fallback.includes(token)) throw new Error(`Fallback runtime capability missing: ${token}`);
+for (const token of ['networkFirst', 'skipWaiting', 'clients.claim', 'ri60x-unified-v3']) if (!serviceWorker.includes(token)) throw new Error(`Service worker hardening missing: ${token}`);
 for (const token of ['class QualityManager', 'pixelRatio', 'shadow', 'observeFrame', 'visibility', 'mobile']) if (!(quality + app).includes(token)) throw new Error(`Performance system missing: ${token}`);
 for (const token of ['GEAR_RATIOS', 'brakeTemp', 'tyreTemp', 'ersDeploy', 'exportCSV', 'exportJSON', 'wheelLoads']) if (!telemetrySource.includes(token)) throw new Error(`Telemetry relationship missing: ${token}`);
 
@@ -51,6 +58,7 @@ const forbiddenOverlayMutation = /vehicle\.(?:root|wheels).*\.(?:position|rotati
 if (forbiddenOverlayMutation.test(overlays)) throw new Error('Analytic overlays must not mutate authored vehicle transforms.');
 if (/src\/ri(?:20|30|50|51)x/.test(await readFile('scripts/build.mjs', 'utf8'))) throw new Error('Build must not layer previous RI generations.');
 if (!bootstrap.includes("await import('./app.js')") || !app.includes('document.addEventListener(\'visibilitychange\'') || (app.match(/requestAnimationFrame\(animate\)/g) || []).length > 3) throw new Error('Rendering lifecycle is not centralized.');
+if (!app.includes('cameraController.setMode(value)') || !app.includes("version: '60.2.0'")) throw new Error('RI-60X 60.2 camera/runtime integration is incomplete.');
 
 const syntaxDirectory = await mkdtemp(join(tmpdir(), 'ri60x-syntax-'));
 try {
@@ -74,7 +82,7 @@ for (const frame of [a.frames[0], a.frames[240], a.frames[600], a.frames.at(-1)]
 }
 if (!a.exportCSV().startsWith('time_s,distance_m') || JSON.parse(a.exportJSON()).frames.length !== FRAME_COUNT) throw new Error('Telemetry export is invalid.');
 
-for (const path of ['assets/favicon.svg', '.github/workflows/deploy-pages.yml', '.github/workflows/browser-quality.yml', 'tests/command-center.spec.js', 'playwright.config.js']) await access(path);
+for (const path of ['assets/favicon.svg', '.github/workflows/deploy-pages.yml', '.github/workflows/browser-quality.yml', '.github/workflows/ri60x-release-recovery.yml', 'tests/command-center.spec.js', 'playwright.config.js']) await access(path);
 const bytes = (await Promise.all(textFiles.map((file) => stat(file)))).reduce((sum, info) => sum + info.size, 0);
 if (bytes > 950000) throw new Error(`RI-60X source budget exceeded: ${bytes} bytes.`);
-console.log(`RI-60X validation passed. Modules: ${files.filter((file) => file.endsWith('.js')).length}. Telemetry: ${FRAME_COUNT} deterministic frames. Source: ${bytes} bytes. Authored hierarchy: protected.`);
+console.log(`RI-60X 60.2 validation passed. Modules: ${files.filter((file) => file.endsWith('.js')).length}. Telemetry: ${FRAME_COUNT} deterministic frames. Source: ${bytes} bytes. Authored hierarchy and connected corner assemblies: protected.`);
