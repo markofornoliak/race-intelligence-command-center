@@ -1,0 +1,73 @@
+name: RI-60X Release Recovery
+
+on:
+  workflow_run:
+    workflows: ["Deploy GitHub Pages"]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  validate-browser-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v6
+        with:
+          ref: main
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - name: Install test dependencies
+        run: npm install
+      - name: Validate source architecture and telemetry
+        run: npm test
+      - name: Build RI-60X production site
+        run: npm run build
+      - name: Verify performance budget
+        run: test "$(du -sb dist | cut -f1)" -lt 1000000
+      - name: Install browser engines
+        run: npx playwright install --with-deps chromium firefox webkit
+      - name: Run Chrome, Firefox, WebKit, tablet and iPhone tests
+        run: npm run test:browser
+      - name: Upload browser evidence on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ri60x-60-1-browser-evidence
+          path: |
+            playwright-report
+            test-results
+          retention-days: 14
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: ./dist
+
+  deploy:
+    needs: validate-browser-build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy current main to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+      - name: Published-site smoke test
+        run: |
+          sleep 8
+          curl --fail --silent --show-error --retry 6 --retry-delay 5 "${{ steps.deployment.outputs.page_url }}" | grep -q "RI-60X"
