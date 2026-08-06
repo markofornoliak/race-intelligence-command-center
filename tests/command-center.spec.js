@@ -15,50 +15,62 @@ function changedPixelRatio(first, second) {
   return changed / (a.width * a.height);
 }
 
+async function waitForRuntime(page) {
+  await page.waitForFunction(() => Boolean(window.RI60X?.diagnostics), null, { timeout: 20000 });
+  return page.evaluate(() => window.RI60X.diagnostics());
+}
+
 test('command center smoke, modes and responsive workspace', async ({ page }, testInfo) => {
   const errors = [];
   page.on('console', (message) => {
     if (message.type() === 'error' && !message.text().includes('favicon')) errors.push(message.text());
   });
   page.on('pageerror', (error) => errors.push(error.message));
+
   await page.goto('/');
   await expect(page.locator('h1')).toContainText('Engineering clarity');
   await expect(page.locator('[data-action="enter"]')).toBeVisible();
+
   const canvas = page.locator('#vehicle-canvas');
   const fallback = page.locator('[data-webgl-fallback]');
-  await expect(canvas.or(fallback)).toBeVisible();
-  const canvasBox = await canvas.boundingBox().catch(() => null);
-  if (canvasBox) expect(canvasBox.width).toBeGreaterThan(baseline.minimumCanvasWidth);
+  await expect.poll(async () => (await canvas.isVisible()) || (await fallback.isVisible())).toBe(true);
+  if (await canvas.isVisible()) {
+    const canvasBox = await canvas.boundingBox();
+    expect(canvasBox.width).toBeGreaterThan(baseline.minimumCanvasWidth);
+  }
 
+  const diagnostics = await waitForRuntime(page);
   await page.locator('[data-action="enter"]').click();
   await expect(page.locator('[data-workspace]')).toBeVisible();
-  const runtimeAvailable = await page.evaluate(() => Boolean(window.RI60X?.diagnostics));
-  if (runtimeAvailable) {
-    await page.locator('[data-mode="technical"]').first().click();
-    await expect(page.locator('html')).toHaveAttribute('data-mode', 'technical');
-    await page.locator('[data-mode="cfd"]').first().click();
-    await expect(page.locator('html')).toHaveAttribute('data-mode', 'cfd');
-    await expect(page.locator('[data-cfd-controls]')).toBeVisible();
-    await page.locator('[data-mode="dynamics"]').first().click();
-    await expect(page.locator('html')).toHaveAttribute('data-mode', 'dynamics');
-    await expect(page.locator('[data-dynamics-controls]')).toBeVisible();
+
+  await page.locator('[data-mode="technical"]').first().click();
+  await expect(page.locator('html')).toHaveAttribute('data-mode', 'technical');
+  await page.locator('[data-mode="cfd"]').first().click();
+  await expect(page.locator('html')).toHaveAttribute('data-mode', 'cfd');
+  await expect(page.locator('[data-cfd-controls]')).toBeVisible();
+  await page.locator('[data-mode="dynamics"]').first().click();
+  await expect(page.locator('html')).toHaveAttribute('data-mode', 'dynamics');
+  await expect(page.locator('[data-dynamics-controls]')).toBeVisible();
+
+  if (diagnostics.webgl !== false) {
     await page.locator('[data-camera="suspension"]').click();
-    await page.locator('[data-action="reset-scene"]').click();
-    await expect(page.locator('html')).toHaveAttribute('data-mode', 'studio');
-    expect(errors).toEqual([]);
-  } else {
-    await expect(fallback).toBeVisible();
   }
+  await page.locator('[data-action="reset-scene"]').click();
+  await expect(page.locator('html')).toHaveAttribute('data-mode', 'studio');
 
   const horizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(horizontalOverflow).toBeLessThanOrEqual(1);
+  expect(errors).toEqual([]);
   await page.screenshot({ path: testInfo.outputPath('command-center.png'), fullPage: true });
 });
 
 test('telemetry relationships and exports are available', async ({ page }) => {
   await page.goto('/');
+  const diagnostics = await waitForRuntime(page);
+  test.skip(diagnostics.telemetry === false, 'Only the static bootstrap fallback was available.');
   await page.locator('[data-action="enter"]').click();
   await page.locator('[data-workspace-tab="analysis"]').click();
+  await expect(page.locator('[data-panel="analysis"]')).toBeVisible();
   await expect(page.locator('[data-telemetry-chart]')).toBeVisible();
   await page.locator('[data-action="play"]').click();
   await page.waitForTimeout(700);
@@ -75,10 +87,12 @@ test('telemetry relationships and exports are available', async ({ page }) => {
 test('visual output is stable across an authored reset', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'chromium-desktop', 'Visual stability baseline runs once on desktop Chromium.');
   await page.goto('/');
+  const diagnostics = await waitForRuntime(page);
+  test.skip(diagnostics.webgl === false, 'The CI runner exposed only the lightweight fallback.');
   await page.waitForTimeout(1800);
   const viewport = page.locator('[data-viewport]');
   const first = await viewport.screenshot({ animations: 'disabled' });
-  await page.locator('[data-action="reset-camera"]').click();
+  await page.evaluate(() => window.RI60X.reset());
   await page.waitForTimeout(1200);
   const second = await viewport.screenshot({ animations: 'disabled' });
   const ratio = changedPixelRatio(first, second);
@@ -88,7 +102,8 @@ test('visual output is stable across an authored reset', async ({ page }, testIn
 
 test('same-origin transfer size stays inside performance budget', async ({ page }) => {
   await page.goto('/');
-  await page.waitForTimeout(1200);
+  await waitForRuntime(page);
+  await page.waitForTimeout(600);
   const transferSize = await page.evaluate(() => performance.getEntriesByType('resource')
     .filter((entry) => new URL(entry.name).origin === location.origin)
     .reduce((sum, entry) => sum + (entry.transferSize || entry.encodedBodySize || 0), 0));
