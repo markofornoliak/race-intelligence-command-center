@@ -1,0 +1,148 @@
+
+OverlayManager.prototype.ensureDynamics = function ensureDynamicsRI602() {
+  if (this.dynamicsBuilt) return;
+  const group = this.groups.dynamics;
+  this.vehicle.root.updateWorldMatrix(true, true);
+
+  this.dynamicFrame = new THREE.Group();
+  this.dynamicFrame.name = 'ANALYTIC_VEHICLE_FRAME';
+  this.dynamicFrame.position.set(-.18, 1.13, 0);
+  group.add(this.dynamicFrame);
+
+  const bodyGeometry = new THREE.BoxGeometry(4.65, .48, 1.02);
+  const bodyEdges = new THREE.EdgesGeometry(bodyGeometry, 24);
+  bodyGeometry.dispose();
+  const bodyOutline = new THREE.LineSegments(
+    bodyEdges,
+    new THREE.LineBasicMaterial({ color: 0x8eabb9, transparent: true, opacity: .34, depthWrite: false })
+  );
+  bodyOutline.name = 'ANALYTIC_CHASSIS_REFERENCE';
+  this.dynamicFrame.add(bodyOutline);
+
+  const axisMaterial = (color) => new THREE.LineBasicMaterial({ color, transparent: true, opacity: .58, depthWrite: false });
+  const axes = [
+    [new THREE.Vector3(-2.5, 0, 0), new THREE.Vector3(2.5, 0, 0), 0xff6b73],
+    [new THREE.Vector3(0, -.48, 0), new THREE.Vector3(0, .72, 0), 0x61d398],
+    [new THREE.Vector3(0, 0, -.82), new THREE.Vector3(0, 0, .82), 0x6ec5ff]
+  ];
+  for (const [start, end, color] of axes) {
+    const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([start, end]), axisMaterial(color));
+    this.dynamicFrame.add(line);
+  }
+
+  const wheelKeys = ['fl', 'fr', 'rl', 'rr'];
+  const worldPosition = new THREE.Vector3();
+  for (const key of wheelKeys) {
+    const wheel = this.vehicle.wheels[key];
+    if (!wheel) continue;
+    wheel.getWorldPosition(worldPosition);
+    const position = worldPosition.clone();
+
+    const marker = new THREE.Group();
+    marker.name = `ANALYTIC_WHEEL_MARKER_${key.toUpperCase()}`;
+    marker.position.copy(position);
+
+    const ring = new THREE.Mesh(
+      new THREE.TorusGeometry(.69, .014, 8, 48),
+      new THREE.MeshBasicMaterial({ color: 0x61d398, transparent: true, opacity: .62, depthWrite: false })
+    );
+    ring.rotation.y = Math.PI / 2;
+    marker.add(ring);
+
+    const travelGeometry = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(0, -.26, 0),
+      new THREE.Vector3(0, .34, 0)
+    ]);
+    const travel = new THREE.Line(
+      travelGeometry,
+      new THREE.LineBasicMaterial({ color: 0x61d398, transparent: true, opacity: .82, depthWrite: false })
+    );
+    marker.add(travel);
+
+    const travelHead = new THREE.Mesh(
+      new THREE.ConeGeometry(.055, .12, 10),
+      new THREE.MeshBasicMaterial({ color: 0x61d398, transparent: true, opacity: .8, depthWrite: false })
+    );
+    travelHead.position.y = .36;
+    marker.add(travelHead);
+
+    group.add(marker);
+    this.suspensionMarkers[key] = { root: marker, ring, travel, travelHead };
+
+    const patch = new THREE.Mesh(
+      new THREE.CircleGeometry(.245, 28),
+      new THREE.MeshBasicMaterial({ color: 0x61d398, transparent: true, opacity: .22, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 })
+    );
+    patch.rotation.x = -Math.PI / 2;
+    patch.position.set(position.x, .642, position.z);
+    patch.scale.set(1.18, .42, 1);
+    group.add(patch);
+    this.contactPatches[key] = patch;
+
+    const arrowOrigin = new THREE.Vector3(position.x, .665, position.z);
+    const arrow = new THREE.ArrowHelper(new THREE.Vector3(0, 1, 0), arrowOrigin, .52, 0xff5038, .12, .065);
+    arrow.line.material.transparent = true;
+    arrow.line.material.opacity = .72;
+    arrow.line.material.depthWrite = false;
+    arrow.cone.material.transparent = true;
+    arrow.cone.material.opacity = .78;
+    arrow.cone.material.depthWrite = false;
+    group.add(arrow);
+    this.loadVectors.push({ key, arrow });
+  }
+
+  const groundPlane = new THREE.GridHelper(6.2, 12, 0x526473, 0x263039);
+  groundPlane.position.set(-.18, .635, 0);
+  groundPlane.material.transparent = true;
+  groundPlane.material.opacity = .15;
+  groundPlane.material.depthWrite = false;
+  group.add(groundPlane);
+
+  this.dynamicsBuilt = true;
+};
+
+OverlayManager.prototype.updateDynamics = function updateDynamicsRI602(delta) {
+  if (!this.dynamicsBuilt || !this.groups.dynamics.visible) return null;
+  let state;
+  if (this.playbackFrames?.length) {
+    state = this.playbackFrames[Math.floor(this.playbackIndex) % this.playbackFrames.length];
+    this.playbackIndex += delta * 60;
+    if (this.playbackIndex >= this.playbackFrames.length) this.playbackFrames = null;
+  } else {
+    const duration = this.event === 'kerb' ? 1.8 : 3.5;
+    this.eventPhase = (this.eventPhase + delta / duration) % 1;
+    state = this.dynamicState(this.eventPhase);
+    if (this.recording) {
+      this.recordedFrames.push(structuredClone(state));
+      if (this.recordedFrames.length > 360) this.setRecording(false);
+    }
+  }
+
+  this.dynamicFrame.rotation.z = THREE.MathUtils.degToRad(state.roll);
+  this.dynamicFrame.rotation.x = THREE.MathUtils.degToRad(state.pitch);
+  this.dynamicFrame.position.y = 1.13 + state.heave / 1000;
+
+  for (const [key, marker] of Object.entries(this.suspensionMarkers)) {
+    const travel = state.travel[key];
+    const compression = travel >= 0;
+    const color = compression ? 0xff6b73 : 0x61d398;
+    marker.ring.material.color.setHex(color);
+    marker.travel.material.color.setHex(color);
+    marker.travelHead.material.color.setHex(color);
+    const normalizedTravel = Math.min(Math.abs(travel) / 35, 1);
+    marker.travel.scale.y = .45 + normalizedTravel * .75;
+    marker.travelHead.position.y = .34 + normalizedTravel * .22;
+    marker.travelHead.rotation.z = compression ? Math.PI : 0;
+    this.contactPatches[key].material.color.setHex(color);
+    this.contactPatches[key].scale.x = 1 + Math.min(state.loads[key] / 12, 1) * .42;
+    this.contactPatches[key].scale.y = .4 + Math.min(state.loads[key] / 12, 1) * .28;
+  }
+
+  for (const { key, arrow } of this.loadVectors) {
+    const normalized = clamp(state.loads[key] / 11, .24, 1);
+    const length = clamp(.22 + normalized * .56, .22, .78);
+    arrow.setLength(length, Math.min(.13, length * .22), Math.min(.07, length * .13));
+    arrow.position.y = .665;
+  }
+  return state;
+};
