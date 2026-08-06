@@ -44,7 +44,7 @@ function initializeFallback(message = 'WebGL2 is unavailable on this device.') {
   assets.markReady();
   assets.registerServiceWorker();
   window.RI60X = Object.freeze({
-    version: '60.1.0-lite',
+    version: '60.2.0-lite',
     state,
     telemetry,
     reset: () => fallbackUI.reset(),
@@ -57,6 +57,7 @@ function bindRuntimeState() {
     const { path, value, source } = detail;
     if (path === 'mode') {
       vehicle.setMode(value);
+      cameraController.setMode(value);
       overlayManager.setMode(value);
       if (value === 'technical' && state.get('lightPreset') === 'studio') state.set('lightPreset', 'technical', 'mode-default');
       if (value === 'studio' && state.get('lightPreset') === 'technical') state.set('lightPreset', 'studio', 'mode-default');
@@ -151,7 +152,7 @@ async function initialize() {
     frameHandle = requestAnimationFrame(animate);
     assets.registerServiceWorker();
     window.RI60X = Object.freeze({
-      version: '60.1.0',
+      version: '60.2.0',
       state,
       telemetry,
       reset: resetScene,
