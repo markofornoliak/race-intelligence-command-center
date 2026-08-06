@@ -1,0 +1,15 @@
+
+VehicleController.prototype.setThermal = function setIndependentBrakeThermal(values) {
+  this.brakeDiscs.forEach((disc, index) => {
+    if (!disc.userData.independentThermalMaterial) {
+      disc.material = this.materials.clone('brake', `disc-${index}`);
+      disc.userData.independentThermalMaterial = true;
+    }
+    const temp = values[index] ?? 450;
+    disc.material.emissive ??= new THREE.Color();
+    const heat = THREE.MathUtils.clamp((temp - 320) / 880, 0, 1);
+    disc.material.emissive.setHSL(THREE.MathUtils.lerp(.035, .015, heat), .96, THREE.MathUtils.lerp(.02, .42, heat));
+    disc.material.emissiveIntensity = THREE.MathUtils.clamp((temp - 360) / 390, 0, 1.85);
+    disc.material.roughness = THREE.MathUtils.lerp(.66, .48, heat);
+  });
+};
