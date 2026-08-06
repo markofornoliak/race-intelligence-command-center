@@ -2,7 +2,7 @@ name: RI-60X Release Recovery
 
 on:
   workflow_run:
-    workflows: ["Deploy GitHub Pages"]
+    workflows: ["Deploy GitHub Pages", "Browser Quality"]
     types: [completed]
   workflow_dispatch:
 
@@ -13,7 +13,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  group: ri60x-release-recovery
   cancel-in-progress: false
 
 jobs:
