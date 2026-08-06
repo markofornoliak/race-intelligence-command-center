@@ -1,0 +1,34 @@
+
+VehicleController.prototype.validateAuthoredTransforms = function validateAuthoredTransformsRI602() {
+  let violations = 0;
+  this.root.traverse((object) => {
+    const original = this.originalTransforms.get(object.uuid);
+    if (!original) return;
+    const positionChanged = object.position.distanceToSquared(original.position) > 1e-10;
+    const quaternionChanged = 1 - Math.abs(object.quaternion.dot(original.quaternion)) > 1e-9;
+    const scaleChanged = object.scale.distanceToSquared(original.scale) > 1e-10;
+    const visibilityChanged = object.visible !== original.visible;
+    if (positionChanged || quaternionChanged || scaleChanged || visibilityChanged) violations += 1;
+  });
+  return violations;
+};
+
+VehicleController.prototype.assertAuthoredTransforms = function restoreAuthoredTransformsRI602() {
+  let restored = 0;
+  this.root.traverse((object) => {
+    const original = this.originalTransforms.get(object.uuid);
+    if (!original) return;
+    const positionChanged = object.position.distanceToSquared(original.position) > 1e-10;
+    const quaternionChanged = 1 - Math.abs(object.quaternion.dot(original.quaternion)) > 1e-9;
+    const scaleChanged = object.scale.distanceToSquared(original.scale) > 1e-10;
+    const visibilityChanged = object.visible !== original.visible;
+    if (positionChanged || quaternionChanged || scaleChanged || visibilityChanged) {
+      object.position.copy(original.position);
+      object.quaternion.copy(original.quaternion);
+      object.scale.copy(original.scale);
+      object.visible = original.visible;
+      restored += 1;
+    }
+  });
+  return restored;
+};
