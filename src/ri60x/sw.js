@@ -1,4 +1,4 @@
-const CACHE = 'ri60x-unified-v2';
+const CACHE = 'ri60x-unified-v3';
 const CORE = [
   './', './index.html', './styles.css', './bootstrap.js', './app.js', './manifest.webmanifest', './assets/favicon.svg',
   './modules/state-manager.js', './modules/utils.js', './modules/asset-manager.js', './modules/quality-manager.js',
