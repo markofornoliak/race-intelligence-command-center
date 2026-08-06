@@ -131,6 +131,19 @@ function stopLoop() {
   frameHandle = 0;
 }
 
+function diagnostics() {
+  return {
+    ...qualityManager.getStats(),
+    authoredTransforms: vehicle.originalTransforms.size,
+    authoredViolations: vehicle.validateAuthoredTransforms(),
+    overlays: overlayManager.root.children.length,
+    cameraMode: cameraController.currentMode,
+    cameraPreset: cameraController.currentPreset,
+    telemetry: true,
+    webgl: true
+  };
+}
+
 async function initialize() {
   if (!webGLAvailable()) {
     initializeFallback();
@@ -156,7 +169,7 @@ async function initialize() {
       state,
       telemetry,
       reset: resetScene,
-      diagnostics: () => ({ ...qualityManager.getStats(), authoredTransforms: vehicle.originalTransforms.size, overlays: overlayManager.root.children.length, telemetry: true, webgl: true })
+      diagnostics
     });
   } catch (error) {
     console.warn('RI-60X initialization failed; switching to lightweight mode.', error);
