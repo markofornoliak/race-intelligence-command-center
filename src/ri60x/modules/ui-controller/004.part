@@ -1,0 +1,95 @@
+
+UIController.prototype.bind = function bindLifecycleSafeRI602() {
+  this.listenerController?.abort();
+  this.listenerController = new AbortController();
+  const { signal } = this.listenerController;
+
+  this.documentClickHandler = (event) => {
+    const button = event.target.closest('button');
+    if (!button) return;
+    const { action, mode, camera, light, workspaceTab, dock, quality, event: dynamicEvent, playback } = button.dataset;
+    if (action) this.handleAction(action, button);
+    if (mode) this.state.set('mode', mode, 'ui');
+    if (camera) this.state.set('cameraPreset', camera, 'ui');
+    if (light) this.state.set('lightPreset', light, 'ui');
+    if (workspaceTab) this.openWorkspace(workspaceTab);
+    if (dock) this.handleDock(dock);
+    if (quality) this.state.set('quality', quality, 'ui');
+    if (dynamicEvent) this.state.set('dynamics.event', dynamicEvent, 'ui');
+    if (playback) this.state.set('playback.speed', Number(playback), 'ui');
+  };
+  document.addEventListener('click', this.documentClickHandler, { signal });
+
+  const flowSpeed = document.querySelector('[data-flow-speed]');
+  flowSpeed?.addEventListener('input', (event) => {
+    const value = Number(event.target.value);
+    event.target.nextElementSibling.textContent = `${value.toFixed(2)}×`;
+    this.state.set('cfd.flowSpeed', value, 'ui');
+  }, { signal });
+
+  const vehicleSpeed = document.querySelector('[data-vehicle-speed]');
+  vehicleSpeed?.addEventListener('input', (event) => {
+    const value = Number(event.target.value);
+    event.target.nextElementSibling.textContent = `${value} km/h`;
+    this.state.set('cfd.vehicleSpeed', value, 'ui');
+  }, { signal });
+
+  this.all('[data-cfd-zone]').forEach((input) => input.addEventListener('change', () => {
+    this.state.set(`cfd.zones.${input.dataset.cfdZone}`, input.checked, 'ui');
+  }, { signal }));
+
+  document.querySelector('[data-timeline]')?.addEventListener('input', (event) => {
+    this.state.set('playback.index', Number(event.target.value), 'ui');
+  }, { signal });
+
+  this.state.addEventListener('change', (event) => this.onStateChange(event.detail), { signal });
+  this.telemetry.addEventListener('frame', (event) => this.updateTelemetry(event.detail), { signal });
+  this.telemetry.addEventListener('playback', () => this.syncPlayback(), { signal });
+
+  this.qualityManager.addEventListener('change', (event) => {
+    this.state.set('quality', event.detail.reason === 'fps-drop' ? 'auto' : this.state.get('quality'), 'quality-manager');
+    this.syncQuality();
+    if (event.detail.reason === 'fps-drop') this.toast('Quality adjusted', `Graphics were reduced to ${event.detail.tier} to protect frame rate.`);
+  }, { signal });
+
+  this.cameraController.addEventListener('preset', (event) => {
+    this.state.set('cameraPreset', event.detail.name, 'camera');
+  }, { signal });
+  this.cameraController.addEventListener('focus', (event) => {
+    const component = event.detail.object.userData.component;
+    if (component) this.updateComponent(component);
+  }, { signal });
+  this.cameraController.addEventListener('cinematic', (event) => {
+    this.state.set('cinematic', event.detail.active, 'camera');
+    this.runtime.setCinematicDOF(event.detail.active);
+  }, { signal });
+
+  const canvas = document.querySelector('#vehicle-canvas');
+  canvas.addEventListener('pointermove', (event) => this.showPointerComponent(event), { signal, passive: true });
+  canvas.addEventListener('pointerleave', () => { this.tooltip.hidden = true; }, { signal });
+
+  document.addEventListener('visibilitychange', () => {
+    this.toast(
+      document.hidden ? 'Rendering paused' : 'Rendering resumed',
+      document.hidden ? 'The 3D loop is suspended while this tab is inactive.' : 'Vehicle rendering is active again.',
+      1500
+    );
+  }, { signal });
+
+  let resizeTimer = 0;
+  const scheduleResize = () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => this.runtime.resize(), 120);
+  };
+  window.addEventListener('resize', scheduleResize, { signal, passive: true });
+  window.addEventListener('orientationchange', scheduleResize, { signal, passive: true });
+  screen.orientation?.addEventListener?.('change', scheduleResize, { signal });
+};
+
+UIController.prototype.dispose = function disposeLifecycleSafeRI602() {
+  this.listenerController?.abort();
+  this.listenerController = null;
+  this.chart.dispose();
+  this.tooltip.hidden = true;
+  this.toastStack.replaceChildren();
+};
