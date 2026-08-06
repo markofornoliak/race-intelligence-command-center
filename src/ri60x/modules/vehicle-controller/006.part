@@ -1,0 +1,225 @@
+
+function suspensionJoint(point, radius, material) {
+  const joint = shadow(new THREE.Mesh(new THREE.SphereGeometry(radius, 12, 8), material));
+  joint.position.copy(point);
+  return joint;
+}
+
+function coilSpringBetween(start, end, radius, turns, material, tubeRadius = .012) {
+  const direction = end.clone().sub(start);
+  const length = direction.length();
+  const axis = direction.clone().normalize();
+  const reference = Math.abs(axis.y) < .92 ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(1, 0, 0);
+  const tangent = new THREE.Vector3().crossVectors(axis, reference).normalize();
+  const bitangent = new THREE.Vector3().crossVectors(axis, tangent).normalize();
+  const points = [];
+  const segments = Math.max(32, turns * 14);
+  for (let i = 0; i <= segments; i += 1) {
+    const t = i / segments;
+    const angle = t * turns * Math.PI * 2;
+    const center = start.clone().addScaledVector(axis, length * t);
+    center.addScaledVector(tangent, Math.cos(angle) * radius);
+    center.addScaledVector(bitangent, Math.sin(angle) * radius);
+    points.push(center);
+  }
+  const curve = new THREE.CatmullRomCurve3(points);
+  return shadow(new THREE.Mesh(new THREE.TubeGeometry(curve, segments, tubeRadius, 7, false), material));
+}
+
+VehicleController.prototype.buildWheelsAndSuspension = function buildWheelsAndSuspensionRI601() {
+  const M = (name) => this.materials.get(name);
+  const positions = {
+    fl: new THREE.Vector3(FRONT_X, WHEEL_RADIUS, -HALF_TRACK),
+    fr: new THREE.Vector3(FRONT_X, WHEEL_RADIUS, HALF_TRACK),
+    rl: new THREE.Vector3(REAR_X, WHEEL_RADIUS, -HALF_TRACK),
+    rr: new THREE.Vector3(REAR_X, WHEEL_RADIUS, HALF_TRACK)
+  };
+  const mobile = this.qualityManager.tier === 'mobile';
+  const radialSegments = mobile ? 28 : 56;
+
+  for (const [key, wheelCenter] of Object.entries(positions)) {
+    const side = key.endsWith('l') ? -1 : 1;
+    const front = key.startsWith('f');
+    const corner = new THREE.Group();
+    corner.name = `CORNER_ASSEMBLY_${key.toUpperCase()}`;
+    corner.userData.component = {
+      name: `${key.toUpperCase()} corner assembly`,
+      system: 'Suspension',
+      description: 'Mechanically connected wheel carrier, double wishbones, pushrod, rocker, inboard spring-damper and brake package.'
+    };
+    this.add(corner);
+    this.components.push(corner);
+
+    const wheel = new THREE.Group();
+    wheel.name = `WHEEL_${key.toUpperCase()}`;
+    wheel.position.copy(wheelCenter);
+    corner.add(wheel);
+    this.wheels[key] = wheel;
+
+    const tyre = named(
+      new THREE.Mesh(new THREE.CylinderGeometry(WHEEL_RADIUS, WHEEL_RADIUS, .39, radialSegments, 2, false), M('rubber')),
+      `${key.toUpperCase()} tyre`,
+      'Tyres',
+      '18-inch racing tyre with rounded shoulders, sidewall detailing and a flattened static contact patch.'
+    );
+    tyre.rotation.x = Math.PI / 2;
+    tyre.scale.set(1, .985, .96);
+    shadow(tyre);
+    wheel.add(tyre);
+    this.components.push(tyre);
+
+    for (const outer of [-1, 1]) {
+      const sidewall = new THREE.Mesh(new THREE.TorusGeometry(.485, .063, 12, radialSegments), M('rubber'));
+      sidewall.position.z = outer * .197;
+      sidewall.scale.y = .985;
+      wheel.add(shadow(sidewall));
+      const stripe = new THREE.Mesh(new THREE.TorusGeometry(.515, .008, 6, radialSegments), M('accent'));
+      stripe.position.z = outer * .207;
+      stripe.scale.y = .985;
+      wheel.add(stripe);
+    }
+
+    const rimBarrel = new THREE.Mesh(new THREE.CylinderGeometry(.405, .405, .325, radialSegments, 1, false), M('magnesium'));
+    rimBarrel.rotation.x = Math.PI / 2;
+    wheel.add(shadow(rimBarrel));
+
+    const rimWell = new THREE.Mesh(new THREE.CylinderGeometry(.335, .335, .34, radialSegments, 1, false), M('dark'));
+    rimWell.rotation.x = Math.PI / 2;
+    wheel.add(shadow(rimWell));
+
+    const spokeGeometry = new THREE.BoxGeometry(.026, .29, .022, 1, 2, 1);
+    const spokes = new THREE.InstancedMesh(spokeGeometry, M('aluminium'), mobile ? 10 : 14);
+    const spokeMatrix = new THREE.Matrix4();
+    const spokeCount = spokes.count;
+    for (let spoke = 0; spoke < spokeCount; spoke += 1) {
+      const angle = (spoke / spokeCount) * Math.PI * 2 + .08;
+      spokeMatrix.compose(
+        new THREE.Vector3(Math.cos(angle) * .185, Math.sin(angle) * .185, 0),
+        new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), angle - Math.PI / 2),
+        new THREE.Vector3(1, 1, 1)
+      );
+      spokes.setMatrixAt(spoke, spokeMatrix);
+    }
+    spokes.instanceMatrix.needsUpdate = true;
+    spokes.castShadow = true;
+    wheel.add(spokes);
+
+    const hub = new THREE.Mesh(new THREE.CylinderGeometry(.12, .12, .39, 24), M('aluminium'));
+    hub.rotation.x = Math.PI / 2;
+    wheel.add(shadow(hub));
+
+    const lockNut = new THREE.Mesh(new THREE.CylinderGeometry(.068, .068, .425, 12), side < 0 ? M('accent') : M('titanium'));
+    lockNut.rotation.x = Math.PI / 2;
+    wheel.add(shadow(lockNut));
+
+    const disc = new THREE.Mesh(new THREE.CylinderGeometry(.295, .295, .052, radialSegments), M('brake'));
+    disc.rotation.x = Math.PI / 2;
+    wheel.add(shadow(disc));
+    this.brakeDiscs.push(disc);
+
+    if (!mobile) {
+      const drillGeometry = new THREE.SphereGeometry(.011, 6, 4);
+      const drillCount = 24;
+      const drills = new THREE.InstancedMesh(drillGeometry, M('dark'), drillCount);
+      const drillMatrix = new THREE.Matrix4();
+      for (let hole = 0; hole < drillCount; hole += 1) {
+        const angle = (hole / drillCount) * Math.PI * 2;
+        drillMatrix.makeTranslation(Math.cos(angle) * .225, Math.sin(angle) * .225, side * .029);
+        drills.setMatrixAt(hole, drillMatrix);
+      }
+      drills.instanceMatrix.needsUpdate = true;
+      wheel.add(drills);
+    }
+
+    const caliper = named(
+      box(new THREE.Vector3(.115, .29, .095), M('caliper'), .035),
+      `${key.toUpperCase()} brake caliper`,
+      'Brakes',
+      'Six-piston caliper positioned around the carbon brake disc.'
+    );
+    caliper.position.set(.215, .015, -side * .025);
+    wheel.add(caliper);
+    this.components.push(caliper);
+
+    const duct = new THREE.Group();
+    duct.name = `BRAKE_DUCT_${key.toUpperCase()}`;
+    const ductScroll = new THREE.Mesh(new THREE.TorusGeometry(.305, .038, 10, 36, Math.PI * 1.48), M('carbonMatte'));
+    ductScroll.rotation.z = front ? .18 : -.16;
+    ductScroll.position.z = -side * .12;
+    duct.add(shadow(ductScroll));
+    const ductMouth = box(new THREE.Vector3(.16, .22, .075), M('carbonMatte'), .045);
+    ductMouth.position.set(front ? -.25 : .24, .04, -side * .145);
+    ductMouth.rotation.z = front ? -.18 : .15;
+    duct.add(ductMouth);
+    wheel.add(duct);
+
+    const uprightCenter = wheelCenter.clone().add(new THREE.Vector3(front ? .025 : -.025, .015, -side * .19));
+    const uprightGroup = new THREE.Group();
+    uprightGroup.name = `UPRIGHT_${key.toUpperCase()}`;
+    corner.add(uprightGroup);
+    const upright = cylinderBetween(
+      uprightCenter.clone().add(new THREE.Vector3(0, -.265, 0)),
+      uprightCenter.clone().add(new THREE.Vector3(0, .265, 0)),
+      .052,
+      M('titanium'),
+      16
+    );
+    corner.add(upright);
+    const carrier = box(new THREE.Vector3(.24, .24, .105), M('titanium'), .055);
+    carrier.position.copy(uprightCenter);
+    corner.add(carrier);
+    const axle = cylinderBetween(
+      uprightCenter.clone().add(new THREE.Vector3(0, 0, -side * .22)),
+      wheelCenter.clone().add(new THREE.Vector3(0, 0, side * .04)),
+      .064,
+      M('aluminium'),
+      18
+    );
+    corner.add(axle);
+
+    const chassisX = front ? -1.62 : 1.42;
+    const sweep = front ? 1 : -1;
+    const upperFront = new THREE.Vector3(chassisX - sweep * .16, .82, side * .39);
+    const upperRear = new THREE.Vector3(chassisX + sweep * .34, .79, side * .40);
+    const lowerFront = new THREE.Vector3(chassisX - sweep * .23, .21, side * .56);
+    const lowerRear = new THREE.Vector3(chassisX + sweep * .40, .23, side * .55);
+    const upperBall = uprightCenter.clone().add(new THREE.Vector3(0, .205, 0));
+    const lowerBall = uprightCenter.clone().add(new THREE.Vector3(0, -.205, 0));
+    const armRadius = mobile ? .021 : .024;
+
+    const arms = [
+      [upperFront, upperBall, M('carbon')],
+      [upperRear, upperBall, M('carbon')],
+      [lowerFront, lowerBall, M('carbon')],
+      [lowerRear, lowerBall, M('carbon')]
+    ];
+    for (const [start, end, material] of arms) corner.add(cylinderBetween(start, end, armRadius, material, 12));
+
+    const steeringAnchor = new THREE.Vector3(chassisX + sweep * .03, .48, side * .47);
+    const steeringArm = uprightCenter.clone().add(new THREE.Vector3(front ? -.08 : .09, .015, -side * .045));
+    corner.add(cylinderBetween(steeringAnchor, steeringArm, .018, M('titanium'), 12));
+
+    const pushrodUpright = uprightCenter.clone().add(new THREE.Vector3(front ? .035 : -.02, .105, 0));
+    const rockerPivot = new THREE.Vector3(front ? -1.28 : 1.13, .98, side * .20);
+    const pushrod = cylinderBetween(pushrodUpright, rockerPivot, .021, M('titanium'), 14);
+    corner.add(pushrod);
+
+    const rocker = box(new THREE.Vector3(.16, .08, .12), M('titanium'), .035);
+    rocker.position.copy(rockerPivot);
+    rocker.rotation.set(0, side * .18, front ? -.28 : .25);
+    corner.add(rocker);
+
+    const damperOuter = new THREE.Vector3(front ? -.94 : .92, .88, side * .105);
+    const damperInner = rockerPivot.clone().lerp(damperOuter, .18);
+    corner.add(cylinderBetween(damperInner, damperOuter, .041, M('aluminium'), 16));
+    const pistonStart = rockerPivot.clone().lerp(damperOuter, .46);
+    corner.add(cylinderBetween(rockerPivot, pistonStart, .017, M('titanium'), 12));
+    if (!mobile) corner.add(coilSpringBetween(pistonStart, damperOuter, .052, 7, M('accent'), .0105));
+
+    const antiRollLinkEnd = new THREE.Vector3(front ? -.78 : .77, .78, side * .06);
+    corner.add(cylinderBetween(rockerPivot.clone().add(new THREE.Vector3(0, -.04, 0)), antiRollLinkEnd, .014, M('titanium'), 10));
+
+    const jointPoints = [upperFront, upperRear, lowerFront, lowerRear, upperBall, lowerBall, steeringAnchor, steeringArm, pushrodUpright, rockerPivot, damperOuter];
+    for (const point of jointPoints) corner.add(suspensionJoint(point, mobile ? .026 : .032, M('titanium')));
+  }
+};
