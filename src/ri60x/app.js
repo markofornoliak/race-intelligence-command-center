@@ -23,6 +23,7 @@ let overlayManager;
 let qualityManager;
 let fallbackUI;
 let ui;
+let runtimeBindings = null;
 let frameHandle = 0;
 let lastTime = performance.now();
 let elapsed = 0;
@@ -39,6 +40,8 @@ function webGLAvailable() {
 
 function initializeFallback(message = 'WebGL2 is unavailable on this device.') {
   stopLoop();
+  runtimeBindings?.abort();
+  runtimeBindings = null;
   fallbackUI = assets.register('fallback-ui', new FallbackUI({ state, telemetry, canvas, fallback }), () => fallbackUI.dispose());
   fallbackUI.initialize(message);
   assets.markReady();
@@ -53,6 +56,10 @@ function initializeFallback(message = 'WebGL2 is unavailable on this device.') {
 }
 
 function bindRuntimeState() {
+  runtimeBindings?.abort();
+  runtimeBindings = new AbortController();
+  const { signal } = runtimeBindings;
+
   state.addEventListener('change', ({ detail }) => {
     const { path, value, source } = detail;
     if (path === 'mode') {
@@ -66,15 +73,15 @@ function bindRuntimeState() {
     if (path === 'lightPreset') runtime.setLightPreset(value);
     if (path === 'quality' && source !== 'quality-manager') qualityManager.set(value);
     if (path === 'autoOrbit') cameraController.setAutoOrbit(value);
-  });
+  }, { signal });
 
   telemetry.addEventListener('frame', ({ detail }) => {
     vehicle.setThermal(detail.frame.brakeTemp);
     vehicle.setDRS(detail.frame.drs);
-  });
+  }, { signal });
 
-  ui.addEventListener('reset-scene', () => resetScene());
-  assets.addEventListener('warning', ({ detail }) => ui.toast('Runtime notice', detail.message));
+  ui.addEventListener('reset-scene', () => resetScene(), { signal });
+  assets.addEventListener('warning', ({ detail }) => ui.toast('Runtime notice', detail.message), { signal });
 }
 
 function resetScene() {
@@ -174,6 +181,8 @@ async function initialize() {
   } catch (error) {
     console.warn('RI-60X initialization failed; switching to lightweight mode.', error);
     stopLoop();
+    runtimeBindings?.abort();
+    runtimeBindings = null;
     assets.dispose();
     initializeFallback('The 3D renderer could not be initialized. Telemetry and the engineering workspace remain available in lightweight mode.');
   }
@@ -185,6 +194,8 @@ document.addEventListener('visibilitychange', () => {
 });
 window.addEventListener('pagehide', () => {
   stopLoop();
+  runtimeBindings?.abort();
+  runtimeBindings = null;
   assets.dispose();
 }, { once: true });
 window.addEventListener('error', (event) => {
