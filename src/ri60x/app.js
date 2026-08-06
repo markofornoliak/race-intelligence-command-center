@@ -8,6 +8,7 @@ import { CameraController } from './modules/camera-controller.js';
 import { OverlayManager } from './modules/overlay-manager.js';
 import { TelemetryEngine } from './modules/telemetry-engine.js';
 import { UIController } from './modules/ui-controller.js';
+import { FallbackUI } from './modules/fallback-ui.js';
 
 const canvas = document.querySelector('#vehicle-canvas');
 const fallback = document.querySelector('[data-webgl-fallback]');
@@ -20,6 +21,7 @@ let vehicle;
 let cameraController;
 let overlayManager;
 let qualityManager;
+let fallbackUI;
 let ui;
 let frameHandle = 0;
 let lastTime = performance.now();
@@ -35,22 +37,19 @@ function webGLAvailable() {
   }
 }
 
-function showFallback(message = 'WebGL2 is unavailable on this device.') {
-  fallback.hidden = false;
-  canvas.hidden = true;
-  fallback.querySelector('p').textContent = message;
-  document.documentElement.dataset.quality = 'mobile';
-  document.querySelector('[data-performance-label]').textContent = 'Lightweight fallback';
-  document.querySelectorAll('[data-action="enter"],[data-dock="diagnostics"],[data-dock="analysis"]').forEach((button) => {
-    button.addEventListener('click', () => {
-      document.querySelector('[data-workspace]').hidden = false;
-      document.querySelector('[data-hero-copy]').classList.add('is-hidden');
-    });
+function initializeFallback(message = 'WebGL2 is unavailable on this device.') {
+  stopLoop();
+  fallbackUI = assets.register('fallback-ui', new FallbackUI({ state, telemetry, canvas, fallback }), () => fallbackUI.dispose());
+  fallbackUI.initialize(message);
+  assets.markReady();
+  assets.registerServiceWorker();
+  window.RI60X = Object.freeze({
+    version: '60.1.0-lite',
+    state,
+    telemetry,
+    reset: () => fallbackUI.reset(),
+    diagnostics: () => fallbackUI.diagnostics()
   });
-  document.querySelectorAll('[data-action="close-workspace"]').forEach((button) => button.addEventListener('click', () => {
-    document.querySelector('[data-workspace]').hidden = true;
-    document.querySelector('[data-hero-copy]').classList.remove('is-hidden');
-  }));
 }
 
 function bindRuntimeState() {
@@ -133,8 +132,7 @@ function stopLoop() {
 
 async function initialize() {
   if (!webGLAvailable()) {
-    showFallback();
-    assets.registerServiceWorker();
+    initializeFallback();
     return;
   }
   try {
@@ -153,15 +151,17 @@ async function initialize() {
     frameHandle = requestAnimationFrame(animate);
     assets.registerServiceWorker();
     window.RI60X = Object.freeze({
-      version: '60.0.0',
+      version: '60.1.0',
       state,
       telemetry,
       reset: resetScene,
-      diagnostics: () => ({ ...qualityManager.getStats(), authoredTransforms: vehicle.originalTransforms.size, overlays: overlayManager.root.children.length })
+      diagnostics: () => ({ ...qualityManager.getStats(), authoredTransforms: vehicle.originalTransforms.size, overlays: overlayManager.root.children.length, telemetry: true, webgl: true })
     });
   } catch (error) {
-    console.error('RI-60X initialization failed', error);
-    showFallback('The 3D renderer could not be initialized. The interface has switched to lightweight mode.');
+    console.warn('RI-60X initialization failed; switching to lightweight mode.', error);
+    stopLoop();
+    assets.dispose();
+    initializeFallback('The 3D renderer could not be initialized. Telemetry and the engineering workspace remain available in lightweight mode.');
   }
 }
 
