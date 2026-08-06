@@ -6,7 +6,7 @@
   "scripts": {
     "start": "npm run build && node server.mjs",
     "preview": "npm run build && node server.mjs",
-    "test": "node scripts/check.mjs",
+    "test": "node scripts/check.mjs && node scripts/check-ri602.mjs",
     "test:browser": "playwright test",
     "build": "node scripts/build.mjs",
     "validate": "npm test && npm run build"
