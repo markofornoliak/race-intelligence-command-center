@@ -1,7 +1,7 @@
 {
   "name": "Race Intelligence Command Center",
   "short_name": "RI-60X",
-  "description": "Formula vehicle engineering digital twin, CFD visualization, dynamics and telemetry workspace.",
+  "description": "RI-60X 60.1 — Formula vehicle engineering digital twin, CFD visualization, dynamics and telemetry workspace.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
